@@ -298,6 +298,8 @@ def add_generation_args(parser):
                              'where x is the source length'))
     group.add_argument('--min-len', default=1, type=float, metavar='N',
                        help=('minimum generation length'))
+    group.add_argument('--max-len', default=500, type=float, metavar='N',
+                       help=('maximum generation length'))
     group.add_argument('--no-early-stop', action='store_true',
                        help=('continue searching even after finalizing k=beam '
                              'hypotheses; this is more correct, but increases '
