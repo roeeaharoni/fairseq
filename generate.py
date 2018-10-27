@@ -77,7 +77,7 @@ def main(args):
         translator = SequenceScorer(models, task.target_dictionary)
     else:
         translator = SequenceGenerator(
-            models, task.target_dictionary, beam_size=args.beam, minlen=args.min_len, maxlen=args.max_len,
+            models, task.target_dictionary, beam_size=args.beam, minlen=args.min_len,
             stop_early=(not args.no_early_stop), normalize_scores=(not args.unnormalized),
             len_penalty=args.lenpen, unk_penalty=args.unkpen,
             sampling=args.sampling, sampling_topk=args.sampling_topk, sampling_temperature=args.sampling_temperature,
@@ -88,6 +88,8 @@ def main(args):
         translator.cuda()
 
     # Generate and compute BLEU score
+    print(args.max_len_a)
+    print(args.max_len_b)
     scorer = bleu.Scorer(tgt_dict.pad(), tgt_dict.eos(), tgt_dict.unk())
     num_sentences = 0
     has_target = True
