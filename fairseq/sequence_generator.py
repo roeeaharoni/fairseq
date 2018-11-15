@@ -513,7 +513,7 @@ class SequenceGenerator(object):
 
         self.agreement_struct[len(tokens[0])] = (tokens, self._calc_agreement(model_probs, ensemble_prob))
 
-        print(self.agrement_struct)
+        print(self.agreement_struct)
 
         exit()
 
