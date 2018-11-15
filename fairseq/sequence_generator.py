@@ -9,6 +9,8 @@ import math
 
 import torch
 
+import torch.nn.functional as F
+
 from fairseq import search, utils
 from fairseq.models import FairseqIncrementalDecoder
 
@@ -29,6 +31,7 @@ class SequenceGenerator(object):
                 normalized scores.
             normalize_scores: Normalize scores by the length of the output.
         """
+        self.agreement_struct = {}
         self.models = models
         self.pad = tgt_dict.pad()
         self.unk = tgt_dict.unk()
@@ -493,7 +496,26 @@ class SequenceGenerator(object):
         avg_probs = torch.logsumexp(torch.stack(log_probs, dim=0), dim=0) - math.log(len(self.models))
         if avg_attn is not None:
             avg_attn.div_(len(self.models))
+
+        #####
+        self.calc_and_save_agreement(tokens, log_probs, avg_probs)
+        #####
+
         return avg_probs, avg_attn
+
+    def _calc_agreement(self, model_probs, ensemble_prob):
+        ens_agreement = self.entropy(ensemble_prob)
+        models_agreement = [self.entropy(model_prob) for model_prob in model_probs]
+        return ens_agreement, models_agreement
+
+    def calc_and_save_agreement(self, tokens, model_probs, ensemble_prob):
+        print(model_probs, ensemble_prob, tokens)
+
+        self.agreement_struct[len(tokens[0])] = (tokens, self._calc_agreement(model_probs, ensemble_prob))
+
+        print(self.agrement_struct)
+
+        exit()
 
     def _decode_one(self, tokens, model, encoder_out, incremental_states, log_probs):
         with torch.no_grad():
@@ -511,3 +533,9 @@ class SequenceGenerator(object):
                 attn = attn[:, -1, :]
         probs = model.get_normalized_probs(decoder_out, log_probs=log_probs)
         return probs, attn
+
+
+    def entropy(self, x):
+        b = F.softmax(x, dim=1) * F.log_softmax(x, dim=1)
+        b = -1.0 * b.mean(dim=1)
+        return b
