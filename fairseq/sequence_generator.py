@@ -506,12 +506,15 @@ class SequenceGenerator(object):
     def _calc_agreement(self, model_probs, ensemble_prob):
         ens_agreement = self.entropy(ensemble_prob)
         models_agreement = [self.entropy(model_prob) for model_prob in model_probs]
-        return ens_agreement, models_agreement
+        return {"ens": ens_agreement, "models": models_agreement}
 
     def calc_and_save_agreement(self, tokens, model_probs, ensemble_prob):
-        print(model_probs, ensemble_prob, tokens)
+        print("1\n", model_probs, "\n2\n", ensemble_prob, "\n3\n", tokens)
 
-        self.agreement_struct[len(tokens[0])] = (tokens, self._calc_agreement(model_probs, ensemble_prob))
+        self.agreement_struct[len(tokens[0])] = {"tokens": tokens,
+                                                 "model_probs": model_probs,
+                                                 "ens_prob": ensemble_prob,
+                                                 "agreements": self._calc_agreement(model_probs, ensemble_prob)}
 
         print(self.agreement_struct)
 
