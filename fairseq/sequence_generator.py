@@ -171,7 +171,7 @@ class SequenceGenerator(object):
         prefix_to_models_entropies,\
             prefix_to_models_probs,\
             prefix_to_ens_entropies,\
-            prefix_to_ens_prob = self.extract_prefix_to_entropies(agreement_structs["agreements_over_time"])
+            prefix_to_ens_prob = self.extract_prefix_to_entropies_and_probabilities(agreement_structs["agreements_over_time"])
 
         samples = []
         for batch in agreement_structs:
