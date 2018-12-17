@@ -8,6 +8,7 @@
 import math
 
 import torch
+from collections import defaultdict
 
 import torch.nn.functional as F
 
@@ -31,7 +32,7 @@ class SequenceGenerator(object):
                 normalized scores.
             normalize_scores: Normalize scores by the length of the output.
         """
-        self.agreement_struct = {}
+        self.agreement_struct = defaultdict(lambda: [])
         self.models = models
         self.pad = tgt_dict.pad()
         self.unk = tgt_dict.unk()
@@ -97,6 +98,11 @@ class SequenceGenerator(object):
                     maxlen=int(maxlen_a*srclen + maxlen_b),
                     prefix_tokens=s['target'][:, :prefix_size] if prefix_size > 0 else None,
                 )
+                ### R&A
+                print(self.agreement_struct)
+                exit()
+                ###
+
             if timer is not None:
                 timer.stop(sum(len(h[0]['tokens']) for h in hypos))
             for i, id in enumerate(s['id'].data):
@@ -509,16 +515,20 @@ class SequenceGenerator(object):
         return {"ens": ens_agreement, "models": models_agreement}
 
     def calc_and_save_agreement(self, tokens, model_probs, ensemble_prob):
+        """
+        :param tokens:
+        :param model_probs: a list of model probabilities for each model from the ensemble
+        :param ensemble_prob: the ensemble distribution (e.g. avg)
+        :return: None
+        """
+
         print("1\n", model_probs, "\n2\n", ensemble_prob, "\n3\n", tokens)
 
-        self.agreement_struct[len(tokens[0])] = {"tokens": tokens,
+        self.agreement_struct[len(tokens[0])].append({"tokens": tokens,
                                                  "model_probs": model_probs,
                                                  "ens_prob": ensemble_prob,
-                                                 "agreements": self._calc_agreement(model_probs, ensemble_prob)}
-
-        print(self.agreement_struct)
-
-        exit()
+                                                 "agreements": self._calc_agreement(model_probs, ensemble_prob)})
+        # print(self.agreement_struct)
 
     def _decode_one(self, tokens, model, encoder_out, incremental_states, log_probs):
         with torch.no_grad():
