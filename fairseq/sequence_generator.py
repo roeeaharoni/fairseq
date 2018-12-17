@@ -16,6 +16,7 @@ import torch.nn.functional as F
 from fairseq import search, utils
 from fairseq.models import FairseqIncrementalDecoder
 
+import numpy as np
 
 class SequenceGenerator(object):
     def __init__(
