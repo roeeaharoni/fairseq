@@ -113,7 +113,8 @@ class SequenceGenerator(object):
                 self.agreement_batch_struct = defaultdict(lambda: [])
                 batch_count += 1
                 if batch_count > 4:
-                    print(self.agreement_structs)
+                    # print(self.agreement_structs)
+                    print(self.final_result(self.agreement_structs))
                     exit()
                 ###
 
@@ -124,6 +125,94 @@ class SequenceGenerator(object):
                 src = utils.strip_pad(input['src_tokens'].data[i, :], self.pad)
                 ref = utils.strip_pad(s['target'].data[i, :], self.pad) if s['target'] is not None else None
                 yield id, src, ref, hypos[i]
+
+
+    def extract_prefix_to_entropies_and_probabilities(self, agreements_over_time):
+        """
+
+        {"tokens": tokens, "strings": self.tgt_dict.string(tokens).split("\n"),
+                "model_probs": model_probs,
+                    "ens_prob": ensemble_prob,
+                    "agreements": self._calc_agreement(model_probs, ensemble_prob)}
+        {"ens": ens_agreement, "models": models_agreement}
+
+
+        :param agreements_over_time:
+        :return:
+        """
+        mapping_ens_ent = {}  # mapping from prefix to ensemble entropy
+        mapping_models_ent = {}  # mapping from prefix to model entropies
+        mapping_ens_prob = {}
+        mapping_models_prob = {}
+
+        for step in agreements_over_time:
+            for ix, prefix in enumerate(step["tokens"]):
+                prefix = self.tgt_dict.string(prefix)
+                mapping_ens_prob[prefix] = step["ens_prob"][ix]
+                mapping_models_prob[prefix] = [model_[ix] for model_ in step["model_probs"]]
+                mapping_ens_ent[prefix] = step["agreements"]["ens"][ix]
+                mapping_models_ent[prefix] = [model_[ix] for model_ in step["agreements"]["models"]]
+
+        return mapping_models_prob, mapping_ens_prob, mapping_ens_ent, mapping_models_ent
+
+
+    def final_result(self, agreement_structs):
+        # list of instances
+            # list of beams
+                # list of steps (over time)
+                    # * model probabilities of next token
+                    # * ensemble probability of next token
+                    # * model entropies of next token
+                    # * ensemble entropy of next token
+                    # * selected next token per model
+                    # * selected next token of ensemble
+                    # * prefix score
+
+        prefix_to_models_entropies,\
+            prefix_to_models_probs,\
+            prefix_to_ens_entropies,\
+            prefix_to_ens_prob = self.extract_prefix_to_entropies(agreement_structs["agreements_over_time"])
+
+        samples = []
+        for batch in agreement_structs:
+            for sample in batch["final_hypos"]:
+                hypos = []
+
+                for hypo in sample:
+                    info = {}
+
+                    info["target"] = hypo["tokens"]
+                    info["target_str"] = self.tgt_dict.string(hypo["tokens"])
+
+                    info_over_time = []
+
+                    for i in range(1, len(info["target"])):
+                        step_info = {}
+
+                        prefix = info["target"][:i]
+                        prefix = self.tgt_dict.string(prefix)
+
+                        step_info[i] = {"prefix": prefix,
+                                        "models_probs": prefix_to_models_probs[prefix],
+                                        "models_ents": prefix_to_models_entropies[prefix],
+                                        "ens_prob": prefix_to_ens_prob[prefix],
+                                        "ens_ent": prefix_to_ens_entropies[prefix],
+                                        "step_score": hypos["positional_scores"][i]}
+
+                        step_info[i]["selected_token_per_model"] = [torch.max(model_prob)[1] for model_prob in step_info[i]["models_probs"]]
+                        step_info[i]["selected_token_by_ens"] = torch.max(step_info[i]["ens_prob"])[1]
+
+                        step_info[i]["selected_token_per_model_str"] = self.tgt_dict.string(step_info[i]["selected_token_per_model"])
+                        step_info[i]["selected_token_by_ens_str"] = self.tgt_dict.string(step_info[i]["selected_token_by_ens"])
+
+                        info_over_time.append(step_info)
+
+                    info["per_token"] = info_over_time
+                    hypos.append(info)
+                samples.append(hypos)
+
+        return samples
+
 
     def generate(self, encoder_input, beam_size=None, maxlen=None, prefix_tokens=None):
         """Generate a batch of translations.
