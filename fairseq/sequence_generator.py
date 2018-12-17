@@ -150,8 +150,9 @@ class SequenceGenerator(object):
             print(step, step_info)
 
             for ix, prefix in enumerate(step_info["tokens"]):
+                r = (ix, prefix)
                 prefix = self.tgt_dict.string(prefix)
-                print(prefix)
+                print(r, prefix)
 
                 mapping_ens_prob[prefix] = step_info["ens_prob"][ix]
                 mapping_models_prob[prefix] = [model_[ix] for model_ in step_info["model_probs"]]
