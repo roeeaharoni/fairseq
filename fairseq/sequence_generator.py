@@ -173,10 +173,11 @@ class SequenceGenerator(object):
 
         samples = []
         for batch_ix, batch in enumerate(agreement_structs):
-            prefix_to_models_entropies, \
             prefix_to_models_probs, \
+            prefix_to_ens_prob, \
             prefix_to_ens_entropies, \
-            prefix_to_ens_prob = self.extract_prefix_to_entropies_and_probabilities(
+            prefix_to_models_entropies, \
+             = self.extract_prefix_to_entropies_and_probabilities(
                 agreement_structs[batch_ix]["agreements_over_time"])
 
             for sample in batch["final_hypos"]:
