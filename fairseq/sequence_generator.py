@@ -168,13 +168,15 @@ class SequenceGenerator(object):
                     # * selected next token of ensemble
                     # * prefix score
 
-        prefix_to_models_entropies,\
-            prefix_to_models_probs,\
-            prefix_to_ens_entropies,\
-            prefix_to_ens_prob = self.extract_prefix_to_entropies_and_probabilities(agreement_structs["agreements_over_time"])
 
         samples = []
-        for batch in agreement_structs:
+        for batch_ix, batch in enumerate(agreement_structs):
+            prefix_to_models_entropies, \
+            prefix_to_models_probs, \
+            prefix_to_ens_entropies, \
+            prefix_to_ens_prob = self.extract_prefix_to_entropies_and_probabilities(
+                agreement_structs[batch_ix])
+
             for sample in batch["final_hypos"]:
                 hypos = []
 
