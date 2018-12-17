@@ -522,7 +522,7 @@ class SequenceGenerator(object):
         :return: None
         """
 
-        print("1\n", model_probs, "\n2\n", ensemble_prob, "\n3\n", tokens)
+        # print("1\n", model_probs, "\n2\n", ensemble_prob, "\n3\n", tokens)
 
         self.agreement_struct[len(tokens[0])].append({"tokens": tokens,
                                                  "model_probs": model_probs,
