@@ -222,7 +222,7 @@ class SequenceGenerator(object):
 
                         # print(torch.max(step_info[i]["ens_prob"], 0)[1])
 
-                        step_info[i]["selected_token_per_model_str"] = [self.tgt_dict.string(torch.tensor(v).view((1,1))) for v in step_info[i]["selected_token_per_model"]]
+                        step_info[i]["selected_token_per_model_str"] = [self.tgt_dict.string(torch.from_numpy(v).view((1,1))) for v in step_info[i]["selected_token_per_model"]]
                         step_info[i]["selected_token_by_ens_str"] = self.tgt_dict.string(torch.tensor(step_info[i]["selected_token_by_ens"]).view((1,1)))
 
                         info_over_time.append(step_info)
