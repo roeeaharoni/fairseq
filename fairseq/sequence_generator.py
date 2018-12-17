@@ -33,7 +33,7 @@ class SequenceGenerator(object):
             normalize_scores: Normalize scores by the length of the output.
         """
         self.agreement_structs = []
-        self.agreement_batch_struct = defaultdict(lambda: [])
+        self.agreement_batch_struct = {} #defaultdict(lambda: [])
         self.models = models
         self.pad = tgt_dict.pad()
         self.unk = tgt_dict.unk()
@@ -110,7 +110,7 @@ class SequenceGenerator(object):
                 final_batch_result = {"agreements_over_time": self.agreement_batch_struct,
                                       "final_hypos": hypos}
                 self.agreement_structs.append(final_batch_result)
-                self.agreement_batch_struct = defaultdict(lambda: [])
+                self.agreement_batch_struct = {} #defaultdict(lambda: [])
                 batch_count += 1
                 if batch_count > 4:
                     # print(self.agreement_structs)
@@ -146,12 +146,14 @@ class SequenceGenerator(object):
         mapping_models_prob = {}
 
         for step in agreements_over_time:
-            for ix, prefix in enumerate(step["tokens"]):
+            step_info = agreements_over_time[step]
+
+            for ix, prefix in enumerate(step_info["tokens"]):
                 prefix = self.tgt_dict.string(prefix)
-                mapping_ens_prob[prefix] = step["ens_prob"][ix]
-                mapping_models_prob[prefix] = [model_[ix] for model_ in step["model_probs"]]
-                mapping_ens_ent[prefix] = step["agreements"]["ens"][ix]
-                mapping_models_ent[prefix] = [model_[ix] for model_ in step["agreements"]["models"]]
+                mapping_ens_prob[prefix] = step_info["ens_prob"][ix]
+                mapping_models_prob[prefix] = [model_[ix] for model_ in step_info["model_probs"]]
+                mapping_ens_ent[prefix] = step_info["agreements"]["ens"][ix]
+                mapping_models_ent[prefix] = [model_[ix] for model_ in step_info["agreements"]["models"]]
 
         return mapping_models_prob, mapping_ens_prob, mapping_ens_ent, mapping_models_ent
 
@@ -175,7 +177,7 @@ class SequenceGenerator(object):
             prefix_to_models_probs, \
             prefix_to_ens_entropies, \
             prefix_to_ens_prob = self.extract_prefix_to_entropies_and_probabilities(
-                agreement_structs[batch_ix])
+                agreement_structs[batch_ix]["agreements_over_time"])
 
             for sample in batch["final_hypos"]:
                 hypos = []
@@ -629,11 +631,11 @@ class SequenceGenerator(object):
 
         # print("1\n", model_probs, "\n2\n", ensemble_prob, "\n3\n", tokens)
 
-        self.agreement_batch_struct[len(tokens[0])].append({"tokens": tokens,
+        self.agreement_batch_struct[len(tokens[0])] = {"tokens": tokens,
                                                  "strings": self.tgt_dict.string(tokens).split("\n"),
                                                  "model_probs": model_probs,
                                                  "ens_prob": ensemble_prob,
-                                                 "agreements": self._calc_agreement(model_probs, ensemble_prob)})
+                                                 "agreements": self._calc_agreement(model_probs, ensemble_prob)}
         # print(self.agreement_struct)
 
     def _decode_one(self, tokens, model, encoder_out, incremental_states, log_probs):
