@@ -212,7 +212,7 @@ class SequenceGenerator(object):
 
                         step_info[i] = {"prefix": prefix,
                                         "models_probs": prefix_to_models_probs[prefix],
-                                        "models_ents": prefix_to_models_entropies[prefix].cpu().numpy(),
+                                        "models_ents": [v.cpu().numpy() for v in prefix_to_models_entropies[prefix]],
                                         "ens_prob": prefix_to_ens_prob[prefix],
                                         "ens_ent": prefix_to_ens_entropies[prefix].cpu().numpy(),
                                         "step_score": hypo["positional_scores"][i].cpu().numpy()}
