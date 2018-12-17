@@ -197,7 +197,7 @@ class SequenceGenerator(object):
                         prefix = info["target"][:i]
                         prefix = self.tgt_dict.string(prefix)
 
-                        print(list(prefix_to_models_probs))
+                        print(list(prefix_to_models_probs), "target:", info["target"], "prefix:", prefix, i, "target str", self.tgt_dict.string(info["target"]))
 
                         step_info[i] = {"prefix": prefix,
                                         "models_probs": prefix_to_models_probs[prefix],
