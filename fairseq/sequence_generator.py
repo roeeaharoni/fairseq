@@ -160,10 +160,10 @@ class SequenceGenerator(object):
                 # prefix = self.tgt_dict.string(prefix)
                 # print(r, prefix)
 
-                mapping_ens_prob[prefix] = step_info["ens_prob"][ix].cpu().numpy()
-                mapping_models_prob[prefix] = [model_[ix].cpu().numpy() for model_ in step_info["model_probs"]]
-                mapping_ens_ent[prefix] = step_info["agreements"]["ens"][ix].cpu().numpy()
-                mapping_models_ent[prefix] = [model_[ix].cpu().numpy() for model_ in step_info["agreements"]["models"]]
+                mapping_ens_prob[prefix] = step_info["ens_prob"][ix]
+                mapping_models_prob[prefix] = [model_[ix] for model_ in step_info["model_probs"]]
+                mapping_ens_ent[prefix] = step_info["agreements"]["ens"][ix]
+                mapping_models_ent[prefix] = [model_[ix] for model_ in step_info["agreements"]["models"]]
 
         return mapping_models_prob, mapping_ens_prob, mapping_ens_ent, mapping_models_ent
 
@@ -226,6 +226,7 @@ class SequenceGenerator(object):
 
                         info_over_time.append(step_info)
 
+                    info["target"] = info["target"].cpu().numpy()
                     info["per_token"] = info_over_time
                     hypos.append(info)
                 samples.append(hypos)
