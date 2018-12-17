@@ -117,7 +117,7 @@ class SequenceGenerator(object):
                     # print(self.agreement_structs)
                     final_eval_result = self.final_result(self.agreement_structs)
 
-                    with open("~/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/ens_eval.pkl", "w") as f:
+                    with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/ens_eval.pkl", "w") as f:
                         pickle.dump(final_eval_result, f)
                     exit()
                 ###
