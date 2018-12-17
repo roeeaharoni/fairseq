@@ -113,11 +113,12 @@ class SequenceGenerator(object):
                 self.agreement_structs.append(final_batch_result)
                 self.agreement_batch_struct = {} #defaultdict(lambda: [])
                 batch_count += 1
-                if batch_count > 4:
+                PICKLE_BATCHES = 250
+                if batch_count > PICKLE_BATCHES:
                     # print(self.agreement_structs)
                     final_eval_result = self.final_result(self.agreement_structs)
 
-                    with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/ens_eval.pkl", "wb") as f:
+                    with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/ens_eval_{}.pkl".format(PICKLE_BATCHES), "wb") as f:
                         pickle.dump(final_eval_result, f, pickle.HIGHEST_PROTOCOL)
                     exit()
                 ###
