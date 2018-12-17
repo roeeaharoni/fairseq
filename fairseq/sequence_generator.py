@@ -643,7 +643,7 @@ class SequenceGenerator(object):
 
         self.agreement_batch_struct[len(tokens[0])] = {"tokens": tokens.clone(),
                                                  "strings": self.tgt_dict.string(tokens).split("\n"),
-                                                 "model_probs": model_probs.clone(),
+                                                 "model_probs": [model_prob.clone() for model_probs in model_probs],
                                                  "ens_prob": ensemble_prob.clone(),
                                                  "agreements": self._calc_agreement(model_probs, ensemble_prob)}
 
