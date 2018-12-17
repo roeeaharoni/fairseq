@@ -200,7 +200,7 @@ class SequenceGenerator(object):
 
                     info_over_time = []
 
-                    for i in range(1, len(info["target"])):
+                    for i in range(len(info["target"])):
                         step_info = {}
 
                         prefix = info["target"][:i]
