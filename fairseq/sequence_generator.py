@@ -225,7 +225,7 @@ class SequenceGenerator(object):
                         step_info[i]["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1,1))) for v in step_info[i]["selected_token_per_model"]]
                         step_info[i]["selected_token_by_ens_str"] = self.tgt_dict.string(step_info[i]["selected_token_by_ens"].view((1,1)))
 
-                        step_info[i]["models_probs"] = step_info[i]["models_probs"].cpu().numpy()
+                        step_info[i]["models_probs"] = [v.cpu().numpy() for v in step_info[i]["models_probs"]]
                         step_info[i]["ens_prob"] = step_info[i]["ens_prob"].cpu().numpy()
 
                         info_over_time.append(step_info)
