@@ -627,8 +627,8 @@ class SequenceGenerator(object):
         return avg_probs, avg_attn
 
     def _calc_agreement(self, model_probs, ensemble_prob):
-        ens_agreement = self.entropy(ensemble_prob)
-        models_agreement = [self.entropy(model_prob) for model_prob in model_probs]
+        ens_agreement = self.entropy(ensemble_prob).clone()
+        models_agreement = [self.entropy(model_prob).clone() for model_prob in model_probs]
         return {"ens": ens_agreement, "models": models_agreement}
 
     def calc_and_save_agreement(self, tokens, model_probs, ensemble_prob):
@@ -641,10 +641,10 @@ class SequenceGenerator(object):
 
         # print("1\n", model_probs, "\n2\n", ensemble_prob, "\n3\n", tokens)
 
-        self.agreement_batch_struct[len(tokens[0])] = {"tokens": tokens,
+        self.agreement_batch_struct[len(tokens[0])] = {"tokens": tokens.clone(),
                                                  "strings": self.tgt_dict.string(tokens).split("\n"),
-                                                 "model_probs": model_probs,
-                                                 "ens_prob": ensemble_prob,
+                                                 "model_probs": model_probs.clone(),
+                                                 "ens_prob": ensemble_prob.clone(),
                                                  "agreements": self._calc_agreement(model_probs, ensemble_prob)}
 
         print(self.agreement_batch_struct[len(tokens[0])]["tokens"], self.agreement_batch_struct[len(tokens[0])]["strings"])
