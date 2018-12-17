@@ -203,8 +203,8 @@ class SequenceGenerator(object):
                                         "ens_ent": prefix_to_ens_entropies[prefix],
                                         "step_score": hypo["positional_scores"][i]}
 
-                        step_info[i]["selected_token_per_model"] = [torch.max(model_prob)[1] for model_prob in step_info[i]["models_probs"]]
-                        step_info[i]["selected_token_by_ens"] = torch.max(step_info[i]["ens_prob"])[1]
+                        step_info[i]["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in step_info[i]["models_probs"]]
+                        step_info[i]["selected_token_by_ens"] = torch.max(step_info[i]["ens_prob"], 0)[1]
 
                         step_info[i]["selected_token_per_model_str"] = self.tgt_dict.string(step_info[i]["selected_token_per_model"])
                         step_info[i]["selected_token_by_ens_str"] = self.tgt_dict.string(step_info[i]["selected_token_by_ens"])
