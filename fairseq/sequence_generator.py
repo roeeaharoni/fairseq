@@ -212,18 +212,21 @@ class SequenceGenerator(object):
 
                         step_info[i] = {"prefix": prefix,
                                         "models_probs": prefix_to_models_probs[prefix],
-                                        "models_ents": prefix_to_models_entropies[prefix],
+                                        "models_ents": prefix_to_models_entropies[prefix].cpu().numpy(),
                                         "ens_prob": prefix_to_ens_prob[prefix],
-                                        "ens_ent": prefix_to_ens_entropies[prefix],
+                                        "ens_ent": prefix_to_ens_entropies[prefix].cpu().numpy(),
                                         "step_score": hypo["positional_scores"][i].cpu().numpy()}
 
-                        step_info[i]["selected_token_per_model"] = [np.argmax(model_prob) for model_prob in step_info[i]["models_probs"]]
-                        step_info[i]["selected_token_by_ens"] = np.argmax(step_info[i]["ens_prob"])
+                        step_info[i]["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in step_info[i]["models_probs"]]
+                        step_info[i]["selected_token_by_ens"] = torch.max(step_info[i]["ens_prob"], 0)[1]
 
                         # print(torch.max(step_info[i]["ens_prob"], 0)[1])
 
-                        step_info[i]["selected_token_per_model_str"] = [self.tgt_dict.string(torch.from_numpy(v).view((1,1))) for v in step_info[i]["selected_token_per_model"]]
-                        step_info[i]["selected_token_by_ens_str"] = self.tgt_dict.string(torch.tensor(step_info[i]["selected_token_by_ens"]).view((1,1)))
+                        step_info[i]["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1,1))) for v in step_info[i]["selected_token_per_model"]]
+                        step_info[i]["selected_token_by_ens_str"] = self.tgt_dict.string(step_info[i]["selected_token_by_ens"].view((1,1)))
+
+                        step_info[i]["models_probs"] = step_info[i]["models_probs"].cpu().numpy()
+                        step_info[i]["ens_prob"] = step_info[i]["ens_prob"].cpu().numpy()
 
                         info_over_time.append(step_info)
 
@@ -634,8 +637,8 @@ class SequenceGenerator(object):
         return avg_probs, avg_attn
 
     def _calc_agreement(self, model_probs, ensemble_prob):
-        ens_agreement = self.entropy(ensemble_prob).cpu().numpy()
-        models_agreement = [self.entropy(model_prob).cpu().numpy() for model_prob in model_probs]
+        ens_agreement = self.entropy(ensemble_prob)
+        models_agreement = [self.entropy(model_prob) for model_prob in model_probs]
         return {"ens": ens_agreement, "models": models_agreement}
 
     def calc_and_save_agreement(self, tokens, model_probs, ensemble_prob):
@@ -648,14 +651,13 @@ class SequenceGenerator(object):
 
         # print("1\n", model_probs, "\n2\n", ensemble_prob, "\n3\n", tokens)
 
-        self.agreement_batch_struct[len(tokens[0])] = {"tokens": tokens.cpu().numpy(),
+        self.agreement_batch_struct[len(tokens[0])] = {"tokens": tokens,
                                                  "strings": self.tgt_dict.string(tokens).split("\n"),
-                                                 "model_probs": [model_prob.cpu().numpy() for model_prob in model_probs],
-                                                 "ens_prob": ensemble_prob.cpu().numpy(),
+                                                 "model_probs": [model_prob for model_prob in model_probs],
+                                                 "ens_prob": ensemble_prob,
                                                  "agreements": self._calc_agreement(model_probs, ensemble_prob)}
 
         # print(self.agreement_batch_struct[len(tokens[0])]["tokens"], self.agreement_batch_struct[len(tokens[0])]["strings"])
-
         # print(self.agreement_struct)
 
     def _decode_one(self, tokens, model, encoder_out, incremental_states, log_probs):
