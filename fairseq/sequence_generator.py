@@ -646,6 +646,9 @@ class SequenceGenerator(object):
                                                  "model_probs": model_probs,
                                                  "ens_prob": ensemble_prob,
                                                  "agreements": self._calc_agreement(model_probs, ensemble_prob)}
+
+        print(self.agreement_batch_struct[len(tokens[0])]["tokens"], self.agreement_batch_struct[len(tokens[0])]["strings"])
+
         # print(self.agreement_struct)
 
     def _decode_one(self, tokens, model, encoder_out, incremental_states, log_probs):
