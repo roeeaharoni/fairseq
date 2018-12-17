@@ -178,7 +178,7 @@ class SequenceGenerator(object):
             prefix_to_ens_entropies, \
             prefix_to_models_entropies, \
              = self.extract_prefix_to_entropies_and_probabilities(
-                agreement_structs[batch_ix]["agreements_over_time"])
+                batch["agreements_over_time"])
 
             for sample in batch["final_hypos"]:
                 hypos = []
@@ -196,6 +196,8 @@ class SequenceGenerator(object):
 
                         prefix = info["target"][:i]
                         prefix = self.tgt_dict.string(prefix)
+
+                        print(list(prefix_to_models_probs))
 
                         step_info[i] = {"prefix": prefix,
                                         "models_probs": prefix_to_models_probs[prefix],
