@@ -154,7 +154,7 @@ class SequenceGenerator(object):
             step_info = agreements_over_time[step]
             # print(step, step_info)
 
-            for ix, prefix in enumerate(self.tgt_dict.string(step_info["tokens"]).split("\n")):
+            for ix, prefix in enumerate(self.tgt_dict.string(torch.tensor(step_info["tokens"])).split("\n")):
                 # for ix, prefix in enumerate(step_info["tokens"]):tokens
                 # print(ix, prefix)
                 # prefix = self.tgt_dict.string(prefix)
