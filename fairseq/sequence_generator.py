@@ -49,6 +49,10 @@ class SequenceGenerator(object):
         self.unk_penalty = unk_penalty
         self.retain_dropout = retain_dropout
 
+        ### A&R
+        self.tgt_dict = tgt_dict
+        ###
+
         assert sampling_topk < 0 or sampling, '--sampling-topk requires --sampling'
 
         if sampling:
@@ -525,6 +529,7 @@ class SequenceGenerator(object):
         # print("1\n", model_probs, "\n2\n", ensemble_prob, "\n3\n", tokens)
 
         self.agreement_struct[len(tokens[0])].append({"tokens": tokens,
+                                                 "strings": self.tgt_dict.string(tokens),
                                                  "model_probs": model_probs,
                                                  "ens_prob": ensemble_prob,
                                                  "agreements": self._calc_agreement(model_probs, ensemble_prob)})
