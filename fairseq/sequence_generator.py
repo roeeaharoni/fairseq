@@ -149,10 +149,11 @@ class SequenceGenerator(object):
             step_info = agreements_over_time[step]
             print(step, step_info)
 
-            for ix, prefix in enumerate(step_info["tokens"]):
-                r = (ix, prefix)
-                prefix = self.tgt_dict.string(prefix)
-                print(r, prefix)
+            for ix, prefix in enumerate(self.tgt_dict.string(step_info["tokens"]).split("\n")):
+                # for ix, prefix in enumerate(step_info["tokens"]):tokens
+                print(ix, prefix)
+                # prefix = self.tgt_dict.string(prefix)
+                # print(r, prefix)
 
                 mapping_ens_prob[prefix] = step_info["ens_prob"][ix]
                 mapping_models_prob[prefix] = [model_[ix] for model_ in step_info["model_probs"]]
