@@ -32,7 +32,8 @@ class SequenceGenerator(object):
                 normalized scores.
             normalize_scores: Normalize scores by the length of the output.
         """
-        self.agreement_struct = defaultdict(lambda: [])
+        self.agreement_structs = []
+        self.agreement_batch_struct = defaultdict(lambda: [])
         self.models = models
         self.pad = tgt_dict.pad()
         self.unk = tgt_dict.unk()
@@ -81,6 +82,9 @@ class SequenceGenerator(object):
         if maxlen_b is None:
             maxlen_b = self.maxlen
 
+        ###
+        batch_count = 0
+        ###
         for sample in data_itr:
             s = utils.move_to_cuda(sample) if cuda else sample
             if 'net_input' not in s:
@@ -103,8 +107,14 @@ class SequenceGenerator(object):
                     prefix_tokens=s['target'][:, :prefix_size] if prefix_size > 0 else None,
                 )
                 ### R&A
-                print(self.agreement_struct)
-                exit()
+                final_batch_result = {"agreements_over_time": self.agreement_batch_struct,
+                                      "final_hypos": hypos}
+                self.agreement_structs.append(final_batch_result)
+                self.agreement_batch_struct = defaultdict(lambda: [])
+                batch_count += 1
+                if batch_count > 4:
+                    print(self.agreement_structs)
+                    exit()
                 ###
 
             if timer is not None:
