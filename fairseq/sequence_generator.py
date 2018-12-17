@@ -203,30 +203,30 @@ class SequenceGenerator(object):
                     info_over_time = []
 
                     for i in range(len(info["target"])):
-                        step_info = {}
+                        # step_info = {}
 
                         prefix = info["target"][:i]
                         prefix = self.tgt_dict.string(prefix)
 
                         # print(list(prefix_to_models_probs), "target:", info["target"], "prefix:", prefix, i, "target str", self.tgt_dict.string(info["target"]))
 
-                        step_info[i] = {"prefix": prefix,
+                        step_info = {"prefix": prefix,
                                         "models_probs": prefix_to_models_probs[prefix],
                                         "models_ents": [v.cpu().numpy() for v in prefix_to_models_entropies[prefix]],
                                         "ens_prob": prefix_to_ens_prob[prefix],
                                         "ens_ent": prefix_to_ens_entropies[prefix].cpu().numpy(),
                                         "step_score": hypo["positional_scores"][i].cpu().numpy()}
 
-                        step_info[i]["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in step_info[i]["models_probs"]]
-                        step_info[i]["selected_token_by_ens"] = torch.max(step_info[i]["ens_prob"], 0)[1]
+                        step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in step_info["models_probs"]]
+                        step_info["selected_token_by_ens"] = torch.max(step_info["ens_prob"], 0)[1]
 
                         # print(torch.max(step_info[i]["ens_prob"], 0)[1])
 
-                        step_info[i]["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1,1))) for v in step_info[i]["selected_token_per_model"]]
-                        step_info[i]["selected_token_by_ens_str"] = self.tgt_dict.string(step_info[i]["selected_token_by_ens"].view((1,1)))
+                        step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1,1))) for v in step_info["selected_token_per_model"]]
+                        step_info["selected_token_by_ens_str"] = self.tgt_dict.string(step_info["selected_token_by_ens"].view((1,1)))
 
-                        step_info[i]["models_probs"] = [v.cpu().numpy() for v in step_info[i]["models_probs"]]
-                        step_info[i]["ens_prob"] = step_info[i]["ens_prob"].cpu().numpy()
+                        step_info["models_probs"] = [v.cpu().numpy() for v in step_info["models_probs"]]
+                        step_info["ens_prob"] = step_info[i]["ens_prob"].cpu().numpy()
 
                         info_over_time.append(step_info)
 
