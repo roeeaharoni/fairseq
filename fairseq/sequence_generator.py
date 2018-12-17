@@ -9,6 +9,7 @@ import math
 
 import torch
 from collections import defaultdict
+import pickle
 
 import torch.nn.functional as F
 
@@ -114,7 +115,10 @@ class SequenceGenerator(object):
                 batch_count += 1
                 if batch_count > 4:
                     # print(self.agreement_structs)
-                    print(self.final_result(self.agreement_structs))
+                    final_eval_result = self.final_result(self.agreement_structs)
+
+                    with open("~/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/ens_eval.pkl", "w") as f:
+                        pickle.dump(final_eval_result, f)
                     exit()
                 ###
 
