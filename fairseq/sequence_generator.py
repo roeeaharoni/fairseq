@@ -147,11 +147,11 @@ class SequenceGenerator(object):
 
         for step in agreements_over_time:
             step_info = agreements_over_time[step]
-            print(step, step_info)
+            # print(step, step_info)
 
             for ix, prefix in enumerate(self.tgt_dict.string(step_info["tokens"]).split("\n")):
                 # for ix, prefix in enumerate(step_info["tokens"]):tokens
-                print(ix, prefix)
+                # print(ix, prefix)
                 # prefix = self.tgt_dict.string(prefix)
                 # print(r, prefix)
 
@@ -202,7 +202,7 @@ class SequenceGenerator(object):
                         prefix = info["target"][:i]
                         prefix = self.tgt_dict.string(prefix)
 
-                        print(list(prefix_to_models_probs), "target:", info["target"], "prefix:", prefix, i, "target str", self.tgt_dict.string(info["target"]))
+                        # print(list(prefix_to_models_probs), "target:", info["target"], "prefix:", prefix, i, "target str", self.tgt_dict.string(info["target"]))
 
                         step_info[i] = {"prefix": prefix,
                                         "models_probs": prefix_to_models_probs[prefix],
@@ -647,7 +647,7 @@ class SequenceGenerator(object):
                                                  "ens_prob": ensemble_prob.clone(),
                                                  "agreements": self._calc_agreement(model_probs, ensemble_prob)}
 
-        print(self.agreement_batch_struct[len(tokens[0])]["tokens"], self.agreement_batch_struct[len(tokens[0])]["strings"])
+        # print(self.agreement_batch_struct[len(tokens[0])]["tokens"], self.agreement_batch_struct[len(tokens[0])]["strings"])
 
         # print(self.agreement_struct)
 
