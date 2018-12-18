@@ -160,18 +160,22 @@ class SequenceGenerator(object):
         for step in agreements_over_time:
             step_info = agreements_over_time[step]
             # print(step, step_info)
-
-            for ix, prefix in enumerate(self.tgt_dict.string(torch.tensor(step_info["tokens"])).split("\n")):
+            print("STEP:\n", step)
+            print("TOKENS_PER_PREFIX_PER_HYPO_PER_SAMPLE:\n", step_info["tokens"], step_info["tokens"].size())
+            print("should be of size step*(16*5)")
+            print("SRC_TOKENS_PER_SAMPLE", step_info["source_tokens"], step_info["source_tokens"].size())
+            print("should be of size 16*seq_len")
+            print(self.tgt_dict.string(source_batch).split("\n"))
+            print(self.tgt_dict.string(torch.tensor(step_info["tokens"])).split("\n"))
+            tokens_per_prefix = self.tgt_dict.string(torch.tensor(step_info["tokens"])).split("\n")
+            for ix, prefix in enumerate(tokens_per_prefix):
                 # for ix, prefix in enumerate(step_info["tokens"]):tokens
                 # print(ix, prefix)
                 # prefix = self.tgt_dict.string(prefix)
                 # print(r, prefix)
                 key = (prefix, self.tgt_dict.string(step_info["source_tokens"][ix // 5]))
                 print(ix, ix // 5, key)
-                print("KKKKK", step_info["tokens"], step_info["tokens"].size())
-                print("KBKBKB", step_info["source_tokens"], step_info["source_tokens"].size())
-                print(self.tgt_dict.string(source_batch).split("\n"))
-                print(self.tgt_dict.string(torch.tensor(step_info["tokens"])).split("\n"))
+
                 print("========")
                 print()
 
