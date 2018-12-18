@@ -111,7 +111,7 @@ class SequenceGenerator(object):
                 ### R&A
                 final_batch_result = {"agreements_over_time": self.agreement_batch_struct,
                                       "final_hypos": hypos}
-                final_batch_result["source"] = encoder_input['src_tokens'].cpu().numpy()
+                final_batch_result["source"] = encoder_input['src_tokens']
                 self.agreement_structs.append(final_batch_result)
                 self.agreement_batch_struct = {}  #defaultdict(lambda: [])
                 batch_count += 1
