@@ -115,7 +115,7 @@ class SequenceGenerator(object):
                 self.agreement_structs.append(final_batch_result)
                 self.agreement_batch_struct = {}  #defaultdict(lambda: [])
                 batch_count += 1
-                PICKLE_BATCHES = 2255
+                PICKLE_BATCHES = 100//16 -1
                 slim = True
                 if batch_count > PICKLE_BATCHES:
                     if not slim:
@@ -139,7 +139,7 @@ class SequenceGenerator(object):
                 yield id, src, ref, hypos[i]
 
 
-    def extract_prefix_to_entropies_and_probabilities(self, agreements_over_time):
+    def extract_prefix_to_entropies_and_probabilities(self, agreements_over_time, source_batch):
         """
 
         {"tokens": tokens, "strings": self.tgt_dict.string(tokens).split("\n"),
@@ -166,11 +166,13 @@ class SequenceGenerator(object):
                 # print(ix, prefix)
                 # prefix = self.tgt_dict.string(prefix)
                 # print(r, prefix)
+                key = (prefix, self.tgt_dict(source_batch[ix // 5]))
+                print(key)
 
-                mapping_ens_prob[prefix] = step_info["ens_prob"][ix]
-                mapping_models_prob[prefix] = [model_[ix] for model_ in step_info["model_probs"]]
-                mapping_ens_ent[prefix] = step_info["agreements"]["ens"][ix]
-                mapping_models_ent[prefix] = [model_[ix] for model_ in step_info["agreements"]["models"]]
+                mapping_ens_prob[key] = step_info["ens_prob"][ix]
+                mapping_models_prob[key] = [model_[ix] for model_ in step_info["model_probs"]]
+                mapping_ens_ent[key] = step_info["agreements"]["ens"][ix]
+                mapping_models_ent[key] = [model_[ix] for model_ in step_info["agreements"]["models"]]
 
         return mapping_models_prob, mapping_ens_prob, mapping_ens_ent, mapping_models_ent
 
@@ -191,7 +193,7 @@ class SequenceGenerator(object):
             prefix_to_ens_entropies, \
             prefix_to_models_entropies, \
              = self.extract_prefix_to_entropies_and_probabilities(
-                batch["agreements_over_time"])
+                batch["agreements_over_time"], batch["source"])
 
             for sample_ix, sample in enumerate(batch["final_hypos"]):
                 hypos = []
@@ -201,18 +203,23 @@ class SequenceGenerator(object):
                 info["target"] = hypo["tokens"]
                 info["target_str"] = self.tgt_dict.string(hypo["tokens"])
 
+                source_tokens = batch["source"][sample_ix]
+                source_info = {"source_tokens": source_tokens.cpu().numpy(), "source_str": self.tgt_dict.string(source_tokens)}
+
                 info_over_time = []
                 for i in range(len(info["target"])):
                     prefix = info["target"][:i]
                     prefix = self.tgt_dict.string(prefix)
 
+                    key = (prefix, source_info["source_str"])
+
                     step_info = {"prefix": prefix,
-                                "models_ents": [v.cpu().numpy() for v in prefix_to_models_entropies[prefix]],
-                                 "ens_ent": prefix_to_ens_entropies[prefix].cpu().numpy(),
+                                "models_ents": [v.cpu().numpy() for v in prefix_to_models_entropies[key]],
+                                 "ens_ent": prefix_to_ens_entropies[key].cpu().numpy(),
                                  "step_score": hypo["positional_scores"][i].cpu().numpy()}
 
-                    step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in prefix_to_models_probs[prefix]]
-                    step_info["selected_token_by_ens"] = torch.max(prefix_to_ens_prob[prefix], 0)[1]
+                    step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in prefix_to_models_probs[key]]
+                    step_info["selected_token_by_ens"] = torch.max(prefix_to_ens_prob[key], 0)[1]
                     step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1,1))) for v in step_info["selected_token_per_model"]]
                     step_info["selected_token_by_ens_str"] = self.tgt_dict.string(step_info["selected_token_by_ens"].view((1,1)))
 
@@ -221,9 +228,6 @@ class SequenceGenerator(object):
                 info["target"] = info["target"].cpu().numpy()
                 info["per_token"] = info_over_time
                 hypos.append(info)
-
-                source_tokens = batch["source"][sample_ix]
-                source_info = {"source_tokens": source_tokens.cpu().numpy(), "source_str": self.tgt_dict.string(source_tokens)}
 
                 samples.append({"targets": hypos, "source": source_info})
                 # samples.append(info)
@@ -250,10 +254,15 @@ class SequenceGenerator(object):
             prefix_to_ens_entropies, \
             prefix_to_models_entropies, \
              = self.extract_prefix_to_entropies_and_probabilities(
-                batch["agreements_over_time"])
+                batch["agreements_over_time"], batch["source"])
 
             for sample_ix, sample in enumerate(batch["final_hypos"]):
                 hypos = []
+
+                # TODO: use src dict. we will use target dict to convert to string
+                # TODO: works for now because we use joint bpe
+                source_tokens = batch["source"][sample_ix]
+                source_info = {"source_tokens": source_tokens.cpu().numpy(), "source_str": self.tgt_dict.string(source_tokens)}
 
                 for hypo in sample:
                     info = {}
@@ -269,13 +278,15 @@ class SequenceGenerator(object):
                         prefix = info["target"][:i]
                         prefix = self.tgt_dict.string(prefix)
 
+                        key = (prefix, source_info["source_str"])
+
                         # print(list(prefix_to_models_probs), "target:", info["target"], "prefix:", prefix, i, "target str", self.tgt_dict.string(info["target"]))
 
                         step_info = {"prefix": prefix,
-                                        "models_probs": prefix_to_models_probs[prefix],
-                                        "models_ents": [v.cpu().numpy() for v in prefix_to_models_entropies[prefix]],
-                                        "ens_prob": prefix_to_ens_prob[prefix],
-                                        "ens_ent": prefix_to_ens_entropies[prefix].cpu().numpy(),
+                                        "models_probs": prefix_to_models_probs[key],
+                                        "models_ents": [v.cpu().numpy() for v in prefix_to_models_entropies[key]],
+                                        "ens_prob": prefix_to_ens_prob[key],
+                                        "ens_ent": prefix_to_ens_entropies[key].cpu().numpy(),
                                         "step_score": hypo["positional_scores"][i].cpu().numpy()}
 
                         step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in step_info["models_probs"]]
@@ -294,11 +305,6 @@ class SequenceGenerator(object):
                     info["target"] = info["target"].cpu().numpy()
                     info["per_token"] = info_over_time
                     hypos.append(info)
-
-                # TODO: use src dict. we will use target dict to convert to string
-                # TODO: works for now because we use joint bpe
-                source_tokens = batch["source"][sample_ix]
-                source_info = {"source_tokens": source_tokens.cpu().numpy(), "source_str": self.tgt_dict.string(source_tokens)}
 
                 samples.append({"targets": hypos, "source": source_info})
 
