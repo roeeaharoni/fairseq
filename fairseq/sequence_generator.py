@@ -166,7 +166,7 @@ class SequenceGenerator(object):
                 # print(ix, prefix)
                 # prefix = self.tgt_dict.string(prefix)
                 # print(r, prefix)
-                key = (prefix, self.tgt_dict(source_batch[ix // 5]))
+                key = (prefix, self.tgt_dict.string(source_batch[ix // 5]))
                 print(key)
 
                 mapping_ens_prob[key] = step_info["ens_prob"][ix]
