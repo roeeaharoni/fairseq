@@ -166,7 +166,7 @@ class SequenceGenerator(object):
                 # print(ix, prefix)
                 # prefix = self.tgt_dict.string(prefix)
                 # print(r, prefix)
-                key = (prefix, self.tgt_dict.string(source_batch[ix // 5 // ]))
+                key = (prefix, self.tgt_dict.string(source_batch[ix // 5]))
                 print(ix, ix // 5, key)
                 print(self.tgt_dict.string(source_batch).split("\n"))
                 print(self.tgt_dict.string(torch.tensor(step_info["tokens"])).split("\n"))
