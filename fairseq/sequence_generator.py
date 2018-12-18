@@ -193,7 +193,7 @@ class SequenceGenerator(object):
              = self.extract_prefix_to_entropies_and_probabilities(
                 batch["agreements_over_time"])
 
-            for sample in batch["final_hypos"]:
+            for sample_ix, sample in enumerate(batch["final_hypos"]):
                 hypo = sample[0]
                 info = {}
 
