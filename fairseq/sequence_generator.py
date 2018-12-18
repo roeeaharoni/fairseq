@@ -204,13 +204,10 @@ class SequenceGenerator(object):
                                  "ens_ent": prefix_to_ens_entropies[prefix].cpu().numpy(),
                                  "step_score": hypo["positional_scores"][i].cpu().numpy()}
 
-                    step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in step_info["models_probs"]]
-                    step_info["selected_token_by_ens"] = torch.max(step_info["ens_prob"], 0)[1]
+                    step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in prefix_to_models_probs[prefix]]
+                    step_info["selected_token_by_ens"] = torch.max(prefix_to_ens_prob[prefix], 0)[1]
                     step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1,1))) for v in step_info["selected_token_per_model"]]
                     step_info["selected_token_by_ens_str"] = self.tgt_dict.string(step_info["selected_token_by_ens"].view((1,1)))
-
-                    step_info["models_probs"] = [v.cpu().numpy() for v in step_info["models_probs"]]
-                    step_info["ens_prob"] = step_info["ens_prob"].cpu().numpy()
 
                     info_over_time.append(step_info)
 
