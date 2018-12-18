@@ -166,8 +166,10 @@ class SequenceGenerator(object):
                 # print(ix, prefix)
                 # prefix = self.tgt_dict.string(prefix)
                 # print(r, prefix)
-                key = (prefix, self.tgt_dict.string(source_batch[ix // 5]))
+                key = (prefix, self.tgt_dict.string(step_info["source_tokens"][ix // 5]))
                 print(ix, ix // 5, key)
+                print("KKKKK", step_info["tokens"], step_info["tokens"].size())
+                print("KBKBKB", step_info["source_tokens"], step_info["source_tokens"].size())
                 print(self.tgt_dict.string(source_batch).split("\n"))
                 print(self.tgt_dict.string(torch.tensor(step_info["tokens"])).split("\n"))
                 print("========")
@@ -743,7 +745,7 @@ class SequenceGenerator(object):
             avg_attn.div_(len(self.models))
 
         #####
-        self.calc_and_save_agreement(tokens, log_probs, avg_probs)
+        self.calc_and_save_agreement(tokens, log_probs, avg_probs, encoder_input['src_tokens'])
         #####
 
         return avg_probs, avg_attn
@@ -753,7 +755,7 @@ class SequenceGenerator(object):
         models_agreement = [self.entropy(model_prob).cpu() for model_prob in model_probs]
         return {"ens": ens_agreement, "models": models_agreement}
 
-    def calc_and_save_agreement(self, tokens, model_probs, ensemble_prob):
+    def calc_and_save_agreement(self, tokens, model_probs, ensemble_prob, source_tokens):
         """
         :param tokens:
         :param model_probs: a list of model probabilities for each model from the ensemble
@@ -763,7 +765,8 @@ class SequenceGenerator(object):
 
         # print("1\n", model_probs, "\n2\n", ensemble_prob, "\n3\n", tokens)
 
-        self.agreement_batch_struct[len(tokens[0])] = {"tokens": tokens.cpu(),
+        self.agreement_batch_struct[len(tokens[0])] = {"source_tokens": source_tokens.cpu(),
+                                                 "tokens": tokens.cpu(),
                                                  "strings": self.tgt_dict.string(tokens).split("\n"),
                                                  "model_probs": [model_prob.cpu() for model_prob in model_probs],
                                                  "ens_prob": ensemble_prob.cpu(),
