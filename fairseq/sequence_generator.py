@@ -114,10 +114,10 @@ class SequenceGenerator(object):
                 self.agreement_structs.append(final_batch_result)
                 self.agreement_batch_struct = {} #defaultdict(lambda: [])
                 batch_count += 1
-                PICKLE_BATCHES = 3
-                if batch_count > PICKLE_BATCHES:
-                    # print(self.agreement_structs)
-                    final_eval_result = self.final_result(self.agreement_structs)
+                PICKLE_BATCHES = 100
+                if batch_count > PICKLE_BATCHES:                    # print(self.agreement_structs)
+                    # final_eval_result = self.final_result(self.agreement_structs)
+                    final_eval_result = self.final_result_slim(self.agreement_structs)
 
                     with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/ens_eval_{}.pkl".format(PICKLE_BATCHES), "wb") as f:
                         pickle.dump(final_eval_result, f, pickle.HIGHEST_PROTOCOL)
@@ -168,6 +168,58 @@ class SequenceGenerator(object):
 
         return mapping_models_prob, mapping_ens_prob, mapping_ens_ent, mapping_models_ent
 
+    def final_result_slim(self, agreement_structs):
+        # list of instances
+            # only top beam
+                # list of steps (over time)
+                    # * model entropies of next token
+                    # * ensemble entropy of next token
+                    # * selected next token per model
+                    # * selected next token of ensemble
+                    # * prefix score
+
+        samples = []
+        for batch_ix, batch in enumerate(agreement_structs):
+            prefix_to_models_probs, \
+            prefix_to_ens_prob, \
+            prefix_to_ens_entropies, \
+            prefix_to_models_entropies, \
+             = self.extract_prefix_to_entropies_and_probabilities(
+                batch["agreements_over_time"])
+
+            for sample in batch["final_hypos"]:
+                hypo = sample[0]
+                info = {}
+
+                info["target"] = hypo["tokens"]
+                info["target_str"] = self.tgt_dict.string(hypo["tokens"])
+
+                info_over_time = []
+                for i in range(len(info["target"])):
+                    prefix = info["target"][:i]
+                    prefix = self.tgt_dict.string(prefix)
+
+                    step_info = {"prefix": prefix,
+                                "models_ents": [v.cpu().numpy() for v in prefix_to_models_entropies[prefix]],
+                                 "ens_ent": prefix_to_ens_entropies[prefix].cpu().numpy(),
+                                 "step_score": hypo["positional_scores"][i].cpu().numpy()}
+
+                    step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in step_info["models_probs"]]
+                    step_info["selected_token_by_ens"] = torch.max(step_info["ens_prob"], 0)[1]
+                    step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1,1))) for v in step_info["selected_token_per_model"]]
+                    step_info["selected_token_by_ens_str"] = self.tgt_dict.string(step_info["selected_token_by_ens"].view((1,1)))
+
+                    step_info["models_probs"] = [v.cpu().numpy() for v in step_info["models_probs"]]
+                    step_info["ens_prob"] = step_info["ens_prob"].cpu().numpy()
+
+                    info_over_time.append(step_info)
+
+                info["target"] = info["target"].cpu().numpy()
+                info["per_token"] = info_over_time
+
+                samples.append(info)
+
+        return samples
 
     def final_result(self, agreement_structs):
         # list of instances
