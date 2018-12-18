@@ -114,12 +114,17 @@ class SequenceGenerator(object):
                 self.agreement_structs.append(final_batch_result)
                 self.agreement_batch_struct = {}  #defaultdict(lambda: [])
                 batch_count += 1
-                PICKLE_BATCHES = 100
+                PICKLE_BATCHES = 2255
+                slim = True
                 if batch_count > PICKLE_BATCHES:                    # print(self.agreement_structs)
-                    # final_eval_result = self.final_result(self.agreement_structs)
-                    final_eval_result = self.final_result_slim(self.agreement_structs)
+                    if not slim:
+                        # final_eval_result = self.final_result(self.agreement_structs)
+                        fname = "ens_eval"
+                    else:
+                        final_eval_result = self.final_result_slim(self.agreement_structs)
+                        fname = "ens_eval_slim"
 
-                    with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/ens_eval_{}.pkl".format(PICKLE_BATCHES), "wb") as f:
+                    with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_{}.pkl".format(fname, PICKLE_BATCHES), "wb") as f:
                         pickle.dump(final_eval_result, f, pickle.HIGHEST_PROTOCOL)
                     exit()
                 ###
