@@ -111,6 +111,7 @@ class SequenceGenerator(object):
                 ### R&A
                 final_batch_result = {"agreements_over_time": self.agreement_batch_struct,
                                       "final_hypos": hypos}
+                final_batch_result["source"] = encoder_input['src_tokens'].cpu().numpy()
                 self.agreement_structs.append(final_batch_result)
                 self.agreement_batch_struct = {}  #defaultdict(lambda: [])
                 batch_count += 1
@@ -219,7 +220,11 @@ class SequenceGenerator(object):
                 info["target"] = info["target"].cpu().numpy()
                 info["per_token"] = info_over_time
 
-                samples.append(info)
+                source_tokens = batch["source"][sample_ix]
+                source_info = {"source_tokens": source_tokens.cpu().numpy(), "source_str": self.tgt_dict.string(source_tokens)}
+
+                samples.append({"targets": info, "source": source_info})
+                # samples.append(info)
 
         return samples
 
@@ -245,7 +250,7 @@ class SequenceGenerator(object):
              = self.extract_prefix_to_entropies_and_probabilities(
                 batch["agreements_over_time"])
 
-            for sample in batch["final_hypos"]:
+            for sample_ix, sample in enumerate(batch["final_hypos"]):
                 hypos = []
 
                 for hypo in sample:
@@ -287,7 +292,13 @@ class SequenceGenerator(object):
                     info["target"] = info["target"].cpu().numpy()
                     info["per_token"] = info_over_time
                     hypos.append(info)
-                samples.append(hypos)
+
+                # TODO: use src dict. we will use target dict to convert to string
+                # TODO: works for now because we use joint bpe
+                source_tokens = batch["source"][sample_ix]
+                source_info = {"source_tokens": source_tokens.cpu().numpy(), "source_str": self.tgt_dict.string(source_tokens)}
+
+                samples.append({"targets": hypos, "source": source_info})
 
         return samples
 
