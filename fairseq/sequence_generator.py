@@ -112,7 +112,7 @@ class SequenceGenerator(object):
                 final_batch_result = {"agreements_over_time": self.agreement_batch_struct,
                                       "final_hypos": hypos}
                 self.agreement_structs.append(final_batch_result)
-                self.agreement_batch_struct = {} #defaultdict(lambda: [])
+                self.agreement_batch_struct = {}  #defaultdict(lambda: [])
                 batch_count += 1
                 PICKLE_BATCHES = 100
                 if batch_count > PICKLE_BATCHES:                    # print(self.agreement_structs)
