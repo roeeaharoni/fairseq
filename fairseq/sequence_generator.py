@@ -115,9 +115,9 @@ class SequenceGenerator(object):
                 self.agreement_structs.append(final_batch_result)
                 self.agreement_batch_struct = {}  #defaultdict(lambda: [])
                 batch_count += 1
-                PICKLE_BATCHES = 10 #2255
+                PICKLE_BATCHES = 2255
                 slim = True
-                if batch_count > PICKLE_BATCHES:                    # print(self.agreement_structs)
+                if batch_count > PICKLE_BATCHES:
                     if not slim:
                         # final_eval_result = self.final_result(self.agreement_structs)
                         fname = "ens_eval"
@@ -194,6 +194,7 @@ class SequenceGenerator(object):
                 batch["agreements_over_time"])
 
             for sample_ix, sample in enumerate(batch["final_hypos"]):
+                hypos = []
                 hypo = sample[0]
                 info = {}
 
@@ -219,11 +220,12 @@ class SequenceGenerator(object):
 
                 info["target"] = info["target"].cpu().numpy()
                 info["per_token"] = info_over_time
+                hypos.append(info)
 
                 source_tokens = batch["source"][sample_ix]
                 source_info = {"source_tokens": source_tokens.cpu().numpy(), "source_str": self.tgt_dict.string(source_tokens)}
 
-                samples.append({"targets": info, "source": source_info})
+                samples.append({"targets": hypos, "source": source_info})
                 # samples.append(info)
 
         return samples
