@@ -546,7 +546,7 @@ class SequenceGenerator(object):
                         model.decoder.reorder_incremental_state(incremental_states[model], reorder_state)
                     encoder_outs[i] = model.encoder.reorder_encoder_out(encoder_outs[i], reorder_state)
 
-            lprobs, avg_attn_scores = self._decode(tokens[:, :step + 1], encoder_outs, incremental_states)
+            lprobs, avg_attn_scores = self._decode(tokens[:, :step + 1], encoder_outs, incremental_states, encoder_input["src_tokens"])
 
             lprobs[:, self.pad] = -math.inf  # never select pad
             lprobs[:, self.unk] -= self.unk_penalty  # apply unk penalty
@@ -726,7 +726,7 @@ class SequenceGenerator(object):
 
         return finalized
 
-    def _decode(self, tokens, encoder_outs, incremental_states):
+    def _decode(self, tokens, encoder_outs, incremental_states, encoder_input_tokens):
         if len(self.models) == 1:
             return self._decode_one(tokens, self.models[0], encoder_outs[0], incremental_states, log_probs=True)
 
@@ -745,7 +745,7 @@ class SequenceGenerator(object):
             avg_attn.div_(len(self.models))
 
         #####
-        self.calc_and_save_agreement(tokens, log_probs, avg_probs, encoder_input['src_tokens'])
+        self.calc_and_save_agreement(tokens, log_probs, avg_probs, encoder_input_tokens)
         #####
 
         return avg_probs, avg_attn
