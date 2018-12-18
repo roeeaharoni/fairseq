@@ -119,10 +119,10 @@ class SequenceGenerator(object):
                 slim = True
                 if batch_count > PICKLE_BATCHES:
                     if not slim:
-                        # final_eval_result = self.final_result(self.agreement_structs)
+                        final_eval_result = self.final_result(self.agreement_structs, slim=slim)
                         fname = "ens_eval"
                     else:
-                        final_eval_result = self.final_result_slim(self.agreement_structs)
+                        final_eval_result = self.final_result(self.agreement_structs, slim=slim)
                         fname = "ens_eval_slim"
 
                     with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_{}.pkl".format(fname, PICKLE_BATCHES), "wb") as f:
@@ -176,7 +176,7 @@ class SequenceGenerator(object):
 
         return mapping_models_prob, mapping_ens_prob, mapping_ens_ent, mapping_models_ent
 
-    def final_result_slim(self, agreement_structs):
+    def final_result(self, agreement_structs, slim=True):
         # list of instances
             # only top beam
                 # list of steps (over time)
@@ -197,44 +197,79 @@ class SequenceGenerator(object):
 
             for sample_ix, sample in enumerate(batch["final_hypos"]):
                 hypos = []
-                hypo = sample[0]
-                info = {}
-
-                info["target"] = hypo["tokens"]
-                info["target_str"] = self.tgt_dict.string(hypo["tokens"])
 
                 source_tokens = batch["source"][sample_ix]
                 source_info = {"source_tokens": source_tokens.cpu().numpy(), "source_str": self.tgt_dict.string(source_tokens)}
 
-                info_over_time = []
-                for i in range(len(info["target"])):
-                    prefix = info["target"][:i]
-                    prefix = self.tgt_dict.string(prefix)
+                for hypo in sample[:1 if slim else len(sample)]:
+                    info = {}
 
-                    key = (prefix, source_info["source_str"])
+                    info["target"] = hypo["tokens"]
+                    info["target_str"] = self.tgt_dict.string(hypo["tokens"])
 
-                    step_info = {"prefix": prefix,
-                                "models_ents": [v.cpu().numpy() for v in prefix_to_models_entropies[key]],
-                                 "ens_ent": prefix_to_ens_entropies[key].cpu().numpy(),
-                                 "step_score": hypo["positional_scores"][i].cpu().numpy()}
 
-                    step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in prefix_to_models_probs[key]]
-                    step_info["selected_token_by_ens"] = torch.max(prefix_to_ens_prob[key], 0)[1]
-                    step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1,1))) for v in step_info["selected_token_per_model"]]
-                    step_info["selected_token_by_ens_str"] = self.tgt_dict.string(step_info["selected_token_by_ens"].view((1,1)))
+                    info_over_time = []
+                    for i in range(len(info["target"])):
+                        if slim:
+                            self.generate_step_info_slim(hypo, i, info, info_over_time, prefix_to_ens_entropies, prefix_to_ens_prob,
+                                                prefix_to_models_entropies, prefix_to_models_probs, source_info)
+                        else:
+                            self.generate_step_info(hypo, i, info, info_over_time, prefix_to_ens_entropies, prefix_to_ens_prob,
+                                                prefix_to_models_entropies, prefix_to_models_probs, source_info)
 
-                    info_over_time.append(step_info)
 
-                info["target"] = info["target"].cpu().numpy()
-                info["per_token"] = info_over_time
-                hypos.append(info)
+                    info["target"] = info["target"].cpu().numpy()
+                    info["per_token"] = info_over_time
+                    hypos.append(info)
 
                 samples.append({"targets": hypos, "source": source_info})
                 # samples.append(info)
 
         return samples
 
-    def final_result(self, agreement_structs):
+    def generate_step_info_slim(self, hypo, i, info, info_over_time, prefix_to_ens_entropies, prefix_to_ens_prob,
+                           prefix_to_models_entropies, prefix_to_models_probs, source_info):
+        prefix = info["target"][:i]
+        prefix = self.tgt_dict.string(prefix)
+        key = (prefix, source_info["source_str"])
+        step_info = {"prefix": prefix,
+                     "models_ents": [v.cpu().numpy() for v in prefix_to_models_entropies[key]],
+                     "ens_ent": prefix_to_ens_entropies[key].cpu().numpy(),
+                     "step_score": hypo["positional_scores"][i].cpu().numpy()}
+        step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in
+                                                 prefix_to_models_probs[key]]
+        step_info["selected_token_by_ens"] = torch.max(prefix_to_ens_prob[key], 0)[1]
+        step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1, 1))) for v in
+                                                     step_info["selected_token_per_model"]]
+        step_info["selected_token_by_ens_str"] = self.tgt_dict.string(step_info["selected_token_by_ens"].view((1, 1)))
+        info_over_time.append(step_info)
+
+    def generate_step_info(self, hypo, i, info, info_over_time, prefix_to_ens_entropies, prefix_to_ens_prob,
+                           prefix_to_models_entropies, prefix_to_models_probs, source_info):
+        prefix = info["target"][:i]
+        prefix = self.tgt_dict.string(prefix)
+        key = (prefix, source_info["source_str"])
+        step_info = {"prefix": prefix,
+                     "models_probs": prefix_to_models_probs[key],
+                     "models_ents": [v.cpu().numpy() for v in prefix_to_models_entropies[key]],
+                     "ens_ent": prefix_to_ens_entropies[key].cpu().numpy(),
+                     "ens_prob": prefix_to_ens_prob[key],
+                     "step_score": hypo["positional_scores"][i].cpu().numpy()}
+        step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in
+                                                 prefix_to_models_probs[key]]
+        step_info["selected_token_by_ens"] = torch.max(prefix_to_ens_prob[key], 0)[1]
+        step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1, 1))) for v in
+                                                     step_info["selected_token_per_model"]]
+        step_info["selected_token_by_ens_str"] = self.tgt_dict.string(step_info["selected_token_by_ens"].view((1, 1)))
+        info_over_time.append(step_info)
+
+    def final_result_(self, agreement_structs):
+        """
+        DEPRECATED
+
+        :param agreement_structs:
+        :return:
+        """
         # list of instances
             # list of beams
                 # list of steps (over time)
