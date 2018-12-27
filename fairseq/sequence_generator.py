@@ -163,7 +163,7 @@ class SequenceGenerator(object):
             print("STEP:\n", step)
             print("TOKENS_PER_PREFIX_PER_HYPO_PER_SAMPLE:\n", step_info["tokens"], len(step_info["tokens"]))
             print("should be of size step*(16*5)")
-            print("SRC_TOKENS_PER_SAMPLE", step_info["source_tokens"], step_info["source_tokens"].size())
+            print("SRC_TOKENS_PER_SAMPLE", step_info["source_tokens"], len(step_info["source_tokens"]))
             print("should be of size 16*seq_len")
             print(self.tgt_dict.string(source_batch).split("\n"))
             print(self.tgt_dict.string(torch.tensor(step_info["tokens"])).split("\n"))
