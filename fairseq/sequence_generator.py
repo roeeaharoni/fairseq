@@ -173,11 +173,11 @@ class SequenceGenerator(object):
                 # print(ix, prefix)
                 # prefix = self.tgt_dict.string(prefix)
                 # print(r, prefix)
-                key = (prefix, self.tgt_dict.string(step_info["source_tokens"][ix // 5]))
-                print(ix, ix // 5, key)
-
-                print("========")
-                print()
+                # for each output prefix and source sequence, create key
+                key = (prefix, self.tgt_dict.string(step_info["source_tokens"][0]))
+                # print(ix, 0, key)
+                # print("========")
+                # print()
 
                 mapping_ens_prob[key] = step_info["ens_prob"][ix]
                 mapping_models_prob[key] = [model_[ix] for model_ in step_info["model_probs"]]
@@ -751,7 +751,7 @@ class SequenceGenerator(object):
         #####
         print(encoder_outs)
         print(encoder_outs[0]["encounter_outs"].size())
-        exit()
+        # exit()
         self.calc_and_save_agreement(tokens, log_probs, avg_probs, encoder_outs)
         #####
 
