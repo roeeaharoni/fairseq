@@ -174,6 +174,9 @@ class SequenceGenerator(object):
                 # prefix = self.tgt_dict.string(prefix)
                 # print(r, prefix)
                 # for each output prefix and source sequence, create key
+                print(prefix)
+                print(step_info["source_tokens"])
+                print(step_info["source_tokens"][0])
                 key = (prefix, self.tgt_dict.string(step_info["source_tokens"][0]))
                 # print(ix, 0, key)
                 # print("========")
