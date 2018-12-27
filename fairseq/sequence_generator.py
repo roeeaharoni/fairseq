@@ -166,7 +166,7 @@ class SequenceGenerator(object):
             print("SRC_TOKENS_PER_SAMPLE", step_info["source_tokens"], len(step_info["source_tokens"]))
             print("should be of size 16*seq_len")
             print("source_batch_strings:\n", self.tgt_dict.string(source_batch).split("\n"))
-            print(self.tgt_dict.string(torch.tensor(step_info["tokens"])).split("\n"))
+            print("step_prefixes_strings:\n", self.tgt_dict.string(torch.tensor(step_info["tokens"])).split("\n"))
             tokens_per_prefix = self.tgt_dict.string(torch.tensor(step_info["tokens"])).split("\n")
             for ix, prefix in enumerate(tokens_per_prefix):
                 # TODO: what are the dims here? batch, timestep, beam?
