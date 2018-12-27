@@ -749,8 +749,8 @@ class SequenceGenerator(object):
             avg_attn.div_(len(self.models))
 
         #####
-        print(encoder_outs)
-        print(encoder_outs[0]["encounter_outs"].size())
+        # print(encoder_outs)
+        # print(encoder_outs[0]["encounter_outs"].size())
         # exit()
         self.calc_and_save_agreement(tokens, log_probs, avg_probs, encoder_outs)
         #####
