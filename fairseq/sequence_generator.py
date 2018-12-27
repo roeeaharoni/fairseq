@@ -772,7 +772,7 @@ class SequenceGenerator(object):
 
         # print("1\n", model_probs, "\n2\n", ensemble_prob, "\n3\n", tokens)
 
-        self.agreement_batch_struct[len(tokens[0])] = {"source_tokens": source_tokens.cpu(),
+        self.agreement_batch_struct[len(tokens[0])] = {"source_tokens": source_tokens,
                                                  "tokens": tokens.cpu(),
                                                  "strings": self.tgt_dict.string(tokens).split("\n"),
                                                  "model_probs": [model_prob.cpu() for model_prob in model_probs],
