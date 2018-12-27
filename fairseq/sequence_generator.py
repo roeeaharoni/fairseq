@@ -161,7 +161,7 @@ class SequenceGenerator(object):
             step_info = agreements_over_time[step]
             # print(step, step_info)
             print("STEP:\n", step)
-            print("TOKENS_PER_PREFIX_PER_HYPO_PER_SAMPLE:\n", step_info["tokens"], step_info["tokens"].size())
+            print("TOKENS_PER_PREFIX_PER_HYPO_PER_SAMPLE:\n", step_info["tokens"], len(step_info["tokens"]))
             print("should be of size step*(16*5)")
             print("SRC_TOKENS_PER_SAMPLE", step_info["source_tokens"], step_info["source_tokens"].size())
             print("should be of size 16*seq_len")
