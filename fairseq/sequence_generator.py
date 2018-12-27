@@ -159,25 +159,25 @@ class SequenceGenerator(object):
 
         for step in agreements_over_time:
             step_info = agreements_over_time[step]
-            # print(step, step_info)
             print("STEP:\n", step)
             print("TOKENS_PER_PREFIX_PER_HYPO_PER_SAMPLE:\n", step_info["tokens"], len(step_info["tokens"]))
             print("should be of size step*(batch_size*beam_size)")
             print("SRC_TOKENS_PER_SAMPLE", step_info["source_tokens"], len(step_info["source_tokens"]))
             print("should be of size 16*seq_len")
-            print("source_batch_strings:\n", self.tgt_dict.string(source_batch).split("\n"))
-            print("step_prefixes_strings:\n", self.tgt_dict.string(torch.tensor(step_info["tokens"])).split("\n"))
+
+            source_strings_in_batch = self.tgt_dict.string(source_batch).split("\n")
+            print("source_strings_in_batch:\n", source_strings_in_batch)
+
             tokens_per_prefix = self.tgt_dict.string(torch.tensor(step_info["tokens"])).split("\n")
+            print("step_prefixes_strings:\n", tokens_per_prefix)
+
             for ix, prefix in enumerate(tokens_per_prefix):
-                # TODO: what are the dims here? batch, timestep, beam?
+
                 # for each output prefix and source sequence, create key
                 print("prefix {} prints:".format(ix))
-                print(prefix)
-                print(step_info["source_tokens"])
-                key = (prefix, self.tgt_dict.string(step_info["source_tokens"][0]))
-                # print(ix, 0, key)
-                # print("========")
-                # print()
+
+                # TODO: this works only for batch_size=1
+                key = (prefix, source_strings_in_batch[0])
 
                 mapping_ens_prob[key] = step_info["ens_prob"][ix]
                 mapping_models_prob[key] = [model_[ix] for model_ in step_info["model_probs"]]
