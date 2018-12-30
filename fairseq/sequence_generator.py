@@ -162,6 +162,8 @@ class SequenceGenerator(object):
 
         mapping_top_k_models_probs = {}
         mapping_top_k_ens_prob = {}
+        mapping_argtop_k_models_probs = {}
+        mapping_argtop_k_ens_prob = {}
         mapping_top_k_models_ents = {}
         mapping_top_k_ens_ent = {}
 
@@ -193,16 +195,19 @@ class SequenceGenerator(object):
 
                 k = 100
                 mapping_top_k_models_probs[key] = [prob.topk(k) for prob in mapping_models_prob[key]]
-                mapping_top_k_models_probs[key] = [prob / sum(prob) for prob in mapping_top_k_models_probs[key]]
+                mapping_argtop_k_models_probs[key] = [prob[1] for prob in mapping_top_k_models_probs[key]]
+                mapping_top_k_models_probs[key] = [prob[0] / sum(prob[0]) for prob in mapping_top_k_models_probs[key]]
                 mapping_top_k_ens_prob[key] = mapping_ens_prob[key].topk(k)
-                mapping_top_k_ens_prob[key] /= sum(mapping_top_k_ens_prob[key])
+                mapping_argtop_k_ens_prob[key] = mapping_top_k_ens_prob[key][1]
+                mapping_top_k_ens_prob[key] /= mapping_top_k_ens_prob[key][0] / sum(mapping_top_k_ens_prob[key][0])
 
                 mapping_top_k_ens_ent[key] = self.entropy(mapping_top_k_ens_prob[key])
                 mapping_top_k_models_ents[key] = [self.entropy(prob) for prob in mapping_top_k_models_probs[key]]
 
         # mapping_models_prob, mapping_ens_prob,
         return mapping_ens_ent, mapping_models_ent, \
-               mapping_top_k_models_probs, mapping_top_k_ens_prob, mapping_top_k_models_ents, mapping_top_k_ens_ent
+               mapping_top_k_models_probs, mapping_top_k_ens_prob, mapping_top_k_models_ents, mapping_top_k_ens_ent, \
+               mapping_argtop_k_models_probs, mapping_argtop_k_ens_prob
 
     def final_result(self, agreement_structs, slim=True):
         # list of instances
@@ -223,7 +228,9 @@ class SequenceGenerator(object):
             prefix_to_models_top_k_probs, \
             prefix_to_ens_top_k_prob, \
             prefix_to_models_top_k_ents, \
-            prefix_to_ens_top_k_ent \
+            prefix_to_ens_top_k_ent, \
+            prefix_to_argtop_k_models_probs, \
+            prefix_to_argtop_k_ens_prob \
                 = self.extract_prefix_to_entropies_and_probabilities(
                 batch["agreements_over_time"], batch["source"])
 
@@ -247,6 +254,7 @@ class SequenceGenerator(object):
                                                          prefix_to_models_entropies,
                                                          prefix_to_models_top_k_probs, prefix_to_ens_top_k_prob,
                                                          prefix_to_models_top_k_ents, prefix_to_ens_top_k_ent,
+                                                         prefix_to_argtop_k_models_probs, prefix_to_argtop_k_ens_prob,
                                                          source_info)
                         else:
                             self.generate_step_info(hypo, i, info, info_over_time, prefix_to_ens_entropies,
@@ -265,6 +273,7 @@ class SequenceGenerator(object):
     def generate_step_info_slim(self, hypo, i, info, info_over_time, prefix_to_ens_entropies,
                                 prefix_to_models_entropies, prefix_to_models_top_k_probs,
                                 prefix_to_ens_top_k_prob, prefix_to_models_top_k_ents, prefix_to_ens_top_k_ent,
+                                prefix_to_argtop_k_models_probs, prefix_to_argtop_k_ens_prob,
                                 source_info):
         prefix = info["target"][:i]
         prefix = self.tgt_dict.string(prefix)
@@ -276,7 +285,9 @@ class SequenceGenerator(object):
                      "models_top_k_probs": [v.cpu().numpy() for v in prefix_to_models_top_k_probs[key]],
                      "models_top_k_ents": [v.cpu().numpy() for v in prefix_to_models_top_k_ents[key]],
                      "ens_top_k_prob": prefix_to_ens_top_k_prob[key].cpu().numpy(),
-                     "ens_top_k_ent": prefix_to_ens_top_k_ent[key].cpu().numpy()
+                     "ens_top_k_ent": prefix_to_ens_top_k_ent[key].cpu().numpy(),
+                     "ens_argtop_k": prefix_to_argtop_k_ens_prob[key].cpu().numpy(),
+                     "models_argtop_k": [v.cpu().numpy() for v in prefix_to_argtop_k_models_probs[key]]
                      }
         step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in
                                                  prefix_to_models_probs[key]]
@@ -284,6 +295,11 @@ class SequenceGenerator(object):
         step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1, 1))) for v in
                                                      step_info["selected_token_per_model"]]
         step_info["selected_token_by_ens_str"] = self.tgt_dict.string(step_info["selected_token_by_ens"].view((1, 1)))
+
+        step_info["ens_argtop_k_str"] = self.tgt_dict.string(step_info["ens_argtop_k"].view((1, 1)))
+        step_info["models_argtop_k_str"] = [self.tgt_dict.string(v.view((1, 1))) for v in
+                                                     step_info["models_argtop_k"]]
+
         info_over_time.append(step_info)
 
     def generate_step_info(self, hypo, i, info, info_over_time, prefix_to_ens_entropies, prefix_to_ens_prob,
