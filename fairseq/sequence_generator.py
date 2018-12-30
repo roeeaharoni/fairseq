@@ -116,7 +116,7 @@ class SequenceGenerator(object):
                 self.agreement_structs.append(final_batch_result)
                 self.agreement_batch_struct = {}  #defaultdict(lambda: [])
                 batch_count += 1
-                NUM_EXAMPLES = 4515
+                NUM_EXAMPLES = 5
                 PICKLE_BATCHES = NUM_EXAMPLES//1 - 1
                 slim = True
                 if batch_count > PICKLE_BATCHES:
