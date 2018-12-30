@@ -18,12 +18,13 @@ from fairseq.models import FairseqIncrementalDecoder
 
 import numpy as np
 
+
 class SequenceGenerator(object):
     def __init__(
-        self, models, tgt_dict, beam_size=1, minlen=1, maxlen=None, stop_early=True,
-        normalize_scores=True, len_penalty=1, unk_penalty=0, retain_dropout=False,
-        sampling=False, sampling_topk=-1, sampling_temperature=1,
-        diverse_beam_groups=-1, diverse_beam_strength=0.5,
+            self, models, tgt_dict, beam_size=1, minlen=1, maxlen=None, stop_early=True,
+            normalize_scores=True, len_penalty=1, unk_penalty=0, retain_dropout=False,
+            sampling=False, sampling_topk=-1, sampling_temperature=1,
+            diverse_beam_groups=-1, diverse_beam_strength=0.5,
     ):
         """Generates translations of a given source sentence.
         Args:
@@ -36,7 +37,7 @@ class SequenceGenerator(object):
         """
         self.agreement_structs = []
         self.top_k_entropy = 100
-        self.agreement_batch_struct = {} #defaultdict(lambda: [])
+        self.agreement_batch_struct = {}  # defaultdict(lambda: [])
         self.models = models
         self.pad = tgt_dict.pad()
         self.unk = tgt_dict.unk()
@@ -72,8 +73,8 @@ class SequenceGenerator(object):
         return self
 
     def generate_batched_itr(
-        self, data_itr, beam_size=None, maxlen_a=0.0, maxlen_b=None,
-        cuda=False, timer=None, prefix_size=0,
+            self, data_itr, beam_size=None, maxlen_a=0.0, maxlen_b=None,
+            cuda=False, timer=None, prefix_size=0,
     ):
         """Iterate over a batched dataset and yield individual translations.
         Args:
@@ -106,7 +107,7 @@ class SequenceGenerator(object):
                 hypos = self.generate(
                     encoder_input,
                     beam_size=beam_size,
-                    maxlen=int(maxlen_a*srclen + maxlen_b),
+                    maxlen=int(maxlen_a * srclen + maxlen_b),
                     prefix_tokens=s['target'][:, :prefix_size] if prefix_size > 0 else None,
                 )
                 ### R&A
@@ -114,10 +115,10 @@ class SequenceGenerator(object):
                                       "final_hypos": hypos}
                 final_batch_result["source"] = encoder_input['src_tokens']
                 self.agreement_structs.append(final_batch_result)
-                self.agreement_batch_struct = {}  #defaultdict(lambda: [])
+                self.agreement_batch_struct = {}  # defaultdict(lambda: [])
                 batch_count += 1
                 NUM_EXAMPLES = 5
-                PICKLE_BATCHES = NUM_EXAMPLES//1 - 1
+                PICKLE_BATCHES = NUM_EXAMPLES // 1 - 1
                 slim = True
                 if batch_count > PICKLE_BATCHES:
                     if not slim:
@@ -127,7 +128,8 @@ class SequenceGenerator(object):
                         final_eval_result = self.final_result(self.agreement_structs, slim=slim)
                         fname = "ens_eval_slim"
 
-                    with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_{}.pkl".format(fname, PICKLE_BATCHES), "wb") as f:
+                    with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_{}.pkl".format(
+                            fname, PICKLE_BATCHES), "wb") as f:
                         pickle.dump(final_eval_result, f, pickle.HIGHEST_PROTOCOL)
                     exit()
                 ###
@@ -139,7 +141,6 @@ class SequenceGenerator(object):
                 src = utils.strip_pad(input['src_tokens'].data[i, :], self.pad)
                 ref = utils.strip_pad(s['target'].data[i, :], self.pad) if s['target'] is not None else None
                 yield id, src, ref, hypos[i]
-
 
     def extract_prefix_to_entropies_and_probabilities(self, agreements_over_time, source_batch):
         """
@@ -179,7 +180,6 @@ class SequenceGenerator(object):
             print("step_prefixes_strings:\n", tokens_per_prefix)
 
             for ix, prefix in enumerate(tokens_per_prefix):
-
                 # for each output prefix and source sequence, create key
                 print("prefix {} prints:".format(ix))
 
@@ -191,45 +191,48 @@ class SequenceGenerator(object):
                 mapping_ens_ent[key] = step_info["agreements"]["ens"][ix]
                 mapping_models_ent[key] = [model_[ix] for model_ in step_info["agreements"]["models"]]
 
-                mapping_top_k_models_probs[key] = [prob.topk(100) for prob in mapping_models_prob[key]]
+                k = 100
+                mapping_top_k_models_probs[key] = [prob.topk(k) for prob in mapping_models_prob[key]]
                 mapping_top_k_models_probs[key] = [prob / sum(prob) for prob in mapping_top_k_models_probs]
-                mapping_top_k_ens_prob[key] = mapping_ens_prob[key].topk(100)
+                mapping_top_k_ens_prob[key] = mapping_ens_prob[key].topk(k)
                 mapping_top_k_ens_prob[key] /= sum(mapping_top_k_ens_prob)
 
                 mapping_top_k_ens_ent[key] = self.entropy(mapping_top_k_ens_prob[key])
                 mapping_top_k_models_ents[key] = [self.entropy(prob) for prob in mapping_top_k_models_probs[key]]
 
-        return mapping_models_prob, mapping_ens_prob, mapping_ens_ent, mapping_models_ent, \
-                mapping_top_k_models_probs, mapping_top_k_ens_prob, mapping_top_k_models_ents, mapping_top_k_ens_ent
+        # mapping_models_prob, mapping_ens_prob,
+        return mapping_ens_ent, mapping_models_ent, \
+               mapping_top_k_models_probs, mapping_top_k_ens_prob, mapping_top_k_models_ents, mapping_top_k_ens_ent
 
     def final_result(self, agreement_structs, slim=True):
         # list of instances
-            # only top beam
-                # list of steps (over time)
-                    # * model entropies of next token
-                    # * ensemble entropy of next token
-                    # * selected next token per model
-                    # * selected next token of ensemble
-                    # * prefix score
+        # only top beam
+        # list of steps (over time)
+        # * model entropies of next token
+        # * ensemble entropy of next token
+        # * selected next token per model
+        # * selected next token of ensemble
+        # * prefix score
 
         samples = []
         for batch_ix, batch in enumerate(agreement_structs):
-            prefix_to_models_probs, \
-            prefix_to_ens_prob, \
+            # prefix_to_models_probs, \
+            # prefix_to_ens_prob, \
             prefix_to_ens_entropies, \
             prefix_to_models_entropies, \
             prefix_to_models_top_k_probs, \
             prefix_to_ens_top_k_prob, \
             prefix_to_models_top_k_ents, \
             prefix_to_ens_top_k_ent \
-             = self.extract_prefix_to_entropies_and_probabilities(
+                = self.extract_prefix_to_entropies_and_probabilities(
                 batch["agreements_over_time"], batch["source"])
 
             for sample_ix, sample in enumerate(batch["final_hypos"]):
                 hypos = []
 
                 source_tokens = batch["source"][sample_ix]
-                source_info = {"source_tokens": source_tokens.cpu().numpy(), "source_str": self.tgt_dict.string(source_tokens)}
+                source_info = {"source_tokens": source_tokens.cpu().numpy(),
+                               "source_str": self.tgt_dict.string(source_tokens)}
 
                 for hypo in sample[:1 if slim else len(sample)]:
                     info = {}
@@ -237,18 +240,18 @@ class SequenceGenerator(object):
                     info["target"] = hypo["tokens"]
                     info["target_str"] = self.tgt_dict.string(hypo["tokens"])
 
-
                     info_over_time = []
                     for i in range(len(info["target"])):
                         if slim:
-                            self.generate_step_info_slim(hypo, i, info, info_over_time, prefix_to_ens_entropies, prefix_to_ens_prob,
-                                                prefix_to_models_entropies, prefix_to_models_probs,
-                                                prefix_to_models_top_k_probs, prefix_to_ens_top_k_prob,
-                                                prefix_to_models_top_k_ents, prefix_to_ens_top_k_ent, source_info)
+                            self.generate_step_info_slim(hypo, i, info, info_over_time, prefix_to_ens_entropies,
+                                                         prefix_to_models_entropies,
+                                                         prefix_to_models_top_k_probs, prefix_to_ens_top_k_prob,
+                                                         prefix_to_models_top_k_ents, prefix_to_ens_top_k_ent,
+                                                         source_info)
                         else:
-                            self.generate_step_info(hypo, i, info, info_over_time, prefix_to_ens_entropies, prefix_to_ens_prob,
-                                                prefix_to_models_entropies, prefix_to_models_probs, source_info)
-
+                            self.generate_step_info(hypo, i, info, info_over_time, prefix_to_ens_entropies,
+                                                    prefix_to_ens_prob,
+                                                    prefix_to_models_entropies, prefix_to_models_probs, source_info)
 
                     info["target"] = info["target"].cpu().numpy()
                     info["per_token"] = info_over_time
@@ -259,9 +262,10 @@ class SequenceGenerator(object):
 
         return samples
 
-    def generate_step_info_slim(self, hypo, i, info, info_over_time, prefix_to_ens_entropies, prefix_to_ens_prob,
-                           prefix_to_models_entropies, prefix_to_models_probs, prefix_to_models_top_k_probs,
-                           prefix_to_ens_top_k_prob, prefix_to_models_top_k_ents, prefix_to_ens_top_k_ent, source_info):
+    def generate_step_info_slim(self, hypo, i, info, info_over_time, prefix_to_ens_entropies,
+                                prefix_to_models_entropies, prefix_to_models_top_k_probs,
+                                prefix_to_ens_top_k_prob, prefix_to_models_top_k_ents, prefix_to_ens_top_k_ent,
+                                source_info):
         prefix = info["target"][:i]
         prefix = self.tgt_dict.string(prefix)
         key = (prefix, source_info["source_str"])
@@ -309,16 +313,15 @@ class SequenceGenerator(object):
         :return:
         """
         # list of instances
-            # list of beams
-                # list of steps (over time)
-                    # * model probabilities of next token
-                    # * ensemble probability of next token
-                    # * model entropies of next token
-                    # * ensemble entropy of next token
-                    # * selected next token per model
-                    # * selected next token of ensemble
-                    # * prefix score
-
+        # list of beams
+        # list of steps (over time)
+        # * model probabilities of next token
+        # * ensemble probability of next token
+        # * model entropies of next token
+        # * ensemble entropy of next token
+        # * selected next token per model
+        # * selected next token of ensemble
+        # * prefix score
 
         samples = []
         for batch_ix, batch in enumerate(agreement_structs):
@@ -326,7 +329,7 @@ class SequenceGenerator(object):
             prefix_to_ens_prob, \
             prefix_to_ens_entropies, \
             prefix_to_models_entropies, \
-             = self.extract_prefix_to_entropies_and_probabilities(
+                = self.extract_prefix_to_entropies_and_probabilities(
                 batch["agreements_over_time"], batch["source"])
 
             for sample_ix, sample in enumerate(batch["final_hypos"]):
@@ -335,7 +338,8 @@ class SequenceGenerator(object):
                 # TODO: use src dict. we will use target dict to convert to string
                 # TODO: works for now because we use joint bpe
                 source_tokens = batch["source"][sample_ix]
-                source_info = {"source_tokens": source_tokens.cpu().numpy(), "source_str": self.tgt_dict.string(source_tokens)}
+                source_info = {"source_tokens": source_tokens.cpu().numpy(),
+                               "source_str": self.tgt_dict.string(source_tokens)}
 
                 for hypo in sample:
                     info = {}
@@ -356,19 +360,22 @@ class SequenceGenerator(object):
                         # print(list(prefix_to_models_probs), "target:", info["target"], "prefix:", prefix, i, "target str", self.tgt_dict.string(info["target"]))
 
                         step_info = {"prefix": prefix,
-                                        "models_probs": prefix_to_models_probs[key],
-                                        "models_ents": [v.cpu().numpy() for v in prefix_to_models_entropies[key]],
-                                        "ens_prob": prefix_to_ens_prob[key],
-                                        "ens_ent": prefix_to_ens_entropies[key].cpu().numpy(),
-                                        "step_score": hypo["positional_scores"][i].cpu().numpy()}
+                                     "models_probs": prefix_to_models_probs[key],
+                                     "models_ents": [v.cpu().numpy() for v in prefix_to_models_entropies[key]],
+                                     "ens_prob": prefix_to_ens_prob[key],
+                                     "ens_ent": prefix_to_ens_entropies[key].cpu().numpy(),
+                                     "step_score": hypo["positional_scores"][i].cpu().numpy()}
 
-                        step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in step_info["models_probs"]]
+                        step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in
+                                                                 step_info["models_probs"]]
                         step_info["selected_token_by_ens"] = torch.max(step_info["ens_prob"], 0)[1]
 
                         # print(torch.max(step_info[i]["ens_prob"], 0)[1])
 
-                        step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1,1))) for v in step_info["selected_token_per_model"]]
-                        step_info["selected_token_by_ens_str"] = self.tgt_dict.string(step_info["selected_token_by_ens"].view((1,1)))
+                        step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1, 1))) for v in
+                                                                     step_info["selected_token_per_model"]]
+                        step_info["selected_token_by_ens_str"] = self.tgt_dict.string(
+                            step_info["selected_token_by_ens"].view((1, 1)))
 
                         step_info["models_probs"] = [v.cpu().numpy() for v in step_info["models_probs"]]
                         step_info["ens_prob"] = step_info["ens_prob"].cpu().numpy()
@@ -382,7 +389,6 @@ class SequenceGenerator(object):
                 samples.append({"targets": hypos, "source": source_info})
 
         return samples
-
 
     def generate(self, encoder_input, beam_size=None, maxlen=None, prefix_tokens=None):
         """Generate a batch of translations.
@@ -496,10 +502,10 @@ class SequenceGenerator(object):
             tokens_clone = tokens.index_select(0, bbsz_idx)
             tokens_clone = tokens_clone[:, 1:step + 2]  # skip the first index, which is EOS
             tokens_clone[:, step] = self.eos
-            attn_clone = attn.index_select(0, bbsz_idx)[:, :, 1:step+2] if attn is not None else None
+            attn_clone = attn.index_select(0, bbsz_idx)[:, :, 1:step + 2] if attn is not None else None
 
             # compute scores per token position
-            pos_scores = scores.index_select(0, bbsz_idx)[:, :step+1]
+            pos_scores = scores.index_select(0, bbsz_idx)[:, :step + 1]
             pos_scores[:, step] = eos_scores
             # convert from cumulative to per-position scores
             pos_scores[:, 1:] = pos_scores[:, 1:] - pos_scores[:, :-1]
@@ -578,7 +584,8 @@ class SequenceGenerator(object):
                         model.decoder.reorder_incremental_state(incremental_states[model], reorder_state)
                     encoder_outs[i] = model.encoder.reorder_encoder_out(encoder_outs[i], reorder_state)
 
-            lprobs, avg_attn_scores = self._decode(tokens[:, :step + 1], encoder_outs, incremental_states, encoder_input["src_tokens"])
+            lprobs, avg_attn_scores = self._decode(tokens[:, :step + 1], encoder_outs, incremental_states,
+                                                   encoder_input["src_tokens"])
 
             lprobs[:, self.pad] = -math.inf  # never select pad
             lprobs[:, self.unk] -= self.unk_penalty  # apply unk penalty
@@ -801,11 +808,11 @@ class SequenceGenerator(object):
         # print("1\n", model_probs, "\n2\n", ensemble_prob, "\n3\n", tokens)
 
         self.agreement_batch_struct[len(tokens[0])] = {"source_tokens": source_tokens,
-                                                 "tokens": tokens.cpu(),
-                                                 "strings": self.tgt_dict.string(tokens).split("\n"),
-                                                 "model_probs": [model_prob.cpu() for model_prob in model_probs],
-                                                 "ens_prob": ensemble_prob.cpu(),
-                                                 "agreements": self._calc_agreement(model_probs, ensemble_prob)}
+                                                       "tokens": tokens.cpu(),
+                                                       "strings": self.tgt_dict.string(tokens).split("\n"),
+                                                       "model_probs": [model_prob.cpu() for model_prob in model_probs],
+                                                       "ens_prob": ensemble_prob.cpu(),
+                                                       "agreements": self._calc_agreement(model_probs, ensemble_prob)}
 
         # print(self.agreement_batch_struct[len(tokens[0])]["tokens"], self.agreement_batch_struct[len(tokens[0])]["strings"])
         # print(self.agreement_struct)
@@ -826,7 +833,6 @@ class SequenceGenerator(object):
                 attn = attn[:, -1, :]
         probs = model.get_normalized_probs(decoder_out, log_probs=log_probs)
         return probs, attn
-
 
     def entropy(self, x):
         b = F.softmax(x, dim=1) * F.log_softmax(x, dim=1)
