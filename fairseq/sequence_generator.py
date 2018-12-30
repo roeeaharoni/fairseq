@@ -202,8 +202,8 @@ class SequenceGenerator(object):
                 mapping_top_k_ens_prob[key] = mapping_top_k_ens_prob[key][0] / sum(mapping_top_k_ens_prob[key][0])
 
                 # .view() as it expects a batch
-                mapping_top_k_ens_ent[key] = self.entropy(mapping_top_k_ens_prob[key].view(1,k))
-                mapping_top_k_models_ents[key] = [self.entropy(prob.view(1,k)) for prob in \
+                mapping_top_k_ens_ent[key] = self.entropy(mapping_top_k_ens_prob[key].view(1, k))
+                mapping_top_k_models_ents[key] = [self.entropy(prob.view(1, k)) for prob in \
                                                   mapping_top_k_models_probs[key]]
 
         # mapping_models_prob, mapping_ens_prob,
@@ -291,16 +291,16 @@ class SequenceGenerator(object):
                      "ens_argtop_k": prefix_to_argtop_k_ens_prob[key].cpu().numpy(),
                      "models_argtop_k": [v.cpu().numpy() for v in prefix_to_argtop_k_models_probs[key]]
                      }
-        step_info["selected_token_per_model"] = [torch.max(model_prob, 0)[1] for model_prob in
-                                                 prefix_to_models_probs[key]]
-        step_info["selected_token_by_ens"] = torch.max(prefix_to_ens_prob[key], 0)[1]
+        step_info["selected_token_per_model"] = [argtop[0].cpu().numpy() for argtop in
+                                                 prefix_to_argtop_k_models_probs[key]]
+        step_info["selected_token_by_ens"] = prefix_to_argtop_k_ens_prob[0].cpu().numpy()
         step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1, 1))) for v in
                                                      step_info["selected_token_per_model"]]
         step_info["selected_token_by_ens_str"] = self.tgt_dict.string(step_info["selected_token_by_ens"].view((1, 1)))
 
         step_info["ens_argtop_k_str"] = self.tgt_dict.string(step_info["ens_argtop_k"].view((1, 1)))
         step_info["models_argtop_k_str"] = [self.tgt_dict.string(v.view((1, 1))) for v in
-                                                     step_info["models_argtop_k"]]
+                                            step_info["models_argtop_k"]]
 
         info_over_time.append(step_info)
 
