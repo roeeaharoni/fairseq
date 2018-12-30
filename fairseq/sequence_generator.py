@@ -201,8 +201,10 @@ class SequenceGenerator(object):
                 mapping_argtop_k_ens_prob[key] = mapping_top_k_ens_prob[key][1]
                 mapping_top_k_ens_prob[key] = mapping_top_k_ens_prob[key][0] / sum(mapping_top_k_ens_prob[key][0])
 
-                mapping_top_k_ens_ent[key] = self.entropy(mapping_top_k_ens_prob[key])
-                mapping_top_k_models_ents[key] = [self.entropy(prob) for prob in mapping_top_k_models_probs[key]]
+                # .view() as it expects a batch
+                mapping_top_k_ens_ent[key] = self.entropy(mapping_top_k_ens_prob[key].view(1,k))
+                mapping_top_k_models_ents[key] = [self.entropy(prob.view(1,k)) for prob in \
+                                                  mapping_top_k_models_probs[key]]
 
         # mapping_models_prob, mapping_ens_prob,
         return mapping_ens_ent, mapping_models_ent, \
