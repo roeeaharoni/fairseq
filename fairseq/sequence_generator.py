@@ -294,8 +294,9 @@ class SequenceGenerator(object):
         step_info["selected_token_per_model"] = [argtop[0].cpu().numpy() for argtop in
                                                  prefix_to_argtop_k_models_probs[key]]
         step_info["selected_token_by_ens"] = prefix_to_argtop_k_ens_prob[key][0].cpu().numpy()
-        step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1, 1))) for v in
-                                                     step_info["selected_token_per_model"]]
+
+        step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v[0].view((1, 1))) for v in
+                                                     prefix_to_argtop_k_models_probs[key]]
         step_info["selected_token_by_ens_str"] = self.tgt_dict.string(step_info["selected_token_by_ens"].view((1, 1)))
 
         step_info["ens_argtop_k_str"] = self.tgt_dict.string(step_info["ens_argtop_k"].view((1, 1)))
