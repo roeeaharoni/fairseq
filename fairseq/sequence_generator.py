@@ -296,7 +296,7 @@ class SequenceGenerator(object):
                      "ens_top_k_prob": prefix_to_ens_top_k_prob[key].cpu().numpy(),
                      "ens_top_k_ent": prefix_to_ens_top_k_ent[key].cpu().numpy(),
                      "ens_argtop_k": prefix_to_argtop_k_ens_prob[key].cpu().numpy(),
-                     "models_argtop_k": [v.cpu().numpy() for v in prefix_to_argtop_k_models_probs[key]]
+                     "models_argtop_k": [v.cpu().numpy() for v in prefix_to_argtop_k_models_probs[key]],
                      "ens_topk_models_probs": [v.cpu().numpy() for v in prefix_to_ens_top_k_models_probs[key]]
                      }
         step_info["selected_token_per_model"] = [argtop[0].cpu().numpy() for argtop in
