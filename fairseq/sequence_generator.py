@@ -36,7 +36,8 @@ class SequenceGenerator(object):
             normalize_scores: Normalize scores by the length of the output.
         """
         self.agreement_structs = []
-        self.top_k_entropy = 100
+        self.top_k_words = 10
+        # self.top_k_entropy = 100
         self.agreement_batch_struct = {}  # defaultdict(lambda: [])
         self.models = models
         self.pad = tgt_dict.pad()
@@ -117,7 +118,7 @@ class SequenceGenerator(object):
                 self.agreement_structs.append(final_batch_result)
                 self.agreement_batch_struct = {}  # defaultdict(lambda: [])
                 batch_count += 1
-                NUM_EXAMPLES = 200
+                NUM_EXAMPLES = 1000
                 PICKLE_BATCHES = NUM_EXAMPLES // 1 - 1
                 slim = True
                 if batch_count > PICKLE_BATCHES:
@@ -128,8 +129,8 @@ class SequenceGenerator(object):
                         final_eval_result = self.final_result(self.agreement_structs, slim=slim)
                         fname = "ens_eval_slim"
 
-                    with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_{}.pkl".format(
-                            fname, PICKLE_BATCHES), "wb") as f:
+                    with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_b{}_k{}.pkl".format(
+                            fname, PICKLE_BATCHES, self.top_k_words), "wb") as f:
                         pickle.dump(final_eval_result, f, pickle.HIGHEST_PROTOCOL)
                     exit()
                 ###
@@ -193,18 +194,17 @@ class SequenceGenerator(object):
                 mapping_ens_ent[key] = step_info["agreements"]["ens"][ix]
                 mapping_models_ent[key] = [model_[ix] for model_ in step_info["agreements"]["models"]]
 
-                k = 100
-                self.top_k_words = k
-                mapping_top_k_models_probs[key] = [prob.topk(k) for prob in mapping_models_prob[key]]
+                # self.top_k_words = k
+                mapping_top_k_models_probs[key] = [prob.topk(self.top_k_words) for prob in mapping_models_prob[key]]
                 mapping_argtop_k_models_probs[key] = [prob[1] for prob in mapping_top_k_models_probs[key]]
                 mapping_top_k_models_probs[key] = [prob[0] for prob in mapping_top_k_models_probs[key]]
-                mapping_top_k_ens_prob[key] = mapping_ens_prob[key].topk(k)
+                mapping_top_k_ens_prob[key] = mapping_ens_prob[key].topk(self.top_k_words)
                 mapping_argtop_k_ens_prob[key] = mapping_top_k_ens_prob[key][1]
                 mapping_top_k_ens_prob[key] = mapping_top_k_ens_prob[key][0]
 
                 # .view() as it expects a batch
-                mapping_top_k_ens_ent[key] = self.entropy(mapping_top_k_ens_prob[key].view(1, k))
-                mapping_top_k_models_ents[key] = [self.entropy(prob.view(1, k)) for prob in \
+                mapping_top_k_ens_ent[key] = self.entropy(mapping_top_k_ens_prob[key].view(1, self.top_k_words))
+                mapping_top_k_models_ents[key] = [self.entropy(prob.view(1, self.top_k_words)) for prob in \
                                                   mapping_top_k_models_probs[key]]
 
         # mapping_models_prob, mapping_ens_prob,
