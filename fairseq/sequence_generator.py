@@ -194,6 +194,7 @@ class SequenceGenerator(object):
                 mapping_models_ent[key] = [model_[ix] for model_ in step_info["agreements"]["models"]]
 
                 k = 100
+                self.top_k_words = k
                 mapping_top_k_models_probs[key] = [prob.topk(k) for prob in mapping_models_prob[key]]
                 mapping_argtop_k_models_probs[key] = [prob[1] for prob in mapping_top_k_models_probs[key]]
                 mapping_top_k_models_probs[key] = [prob[0] / sum(prob[0]) for prob in mapping_top_k_models_probs[key]]
@@ -297,11 +298,11 @@ class SequenceGenerator(object):
 
         step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v[0].view((1, 1))) for v in
                                                      prefix_to_argtop_k_models_probs[key]]
-        step_info["selected_token_by_ens_str"] = self.tgt_dict.string(step_info["selected_token_by_ens"].view((1, 1)))
+        step_info["selected_token_by_ens_str"] = self.tgt_dict.string(prefix_to_argtop_k_ens_prob[key][0].view((1, 1)))
 
-        step_info["ens_argtop_k_str"] = self.tgt_dict.string(step_info["ens_argtop_k"].view((1, 1)))
-        step_info["models_argtop_k_str"] = [self.tgt_dict.string(v.view((1, 1))) for v in
-                                            step_info["models_argtop_k"]]
+        step_info["ens_argtop_k_str"] = self.tgt_dict.string(prefix_to_argtop_k_ens_prob[key].view((1, 1)))
+        step_info["models_argtop_k_str"] = [self.tgt_dict.string(v.view((self.top_k_words, 1))) for v in
+                                            prefix_to_argtop_k_models_probs[key]]
 
         info_over_time.append(step_info)
 
