@@ -300,7 +300,7 @@ class SequenceGenerator(object):
                                                      prefix_to_argtop_k_models_probs[key]]
         step_info["selected_token_by_ens_str"] = self.tgt_dict.string(prefix_to_argtop_k_ens_prob[key][0].view((1, 1)))
 
-        step_info["ens_argtop_k_str"] = self.tgt_dict.string(prefix_to_argtop_k_ens_prob[key].view((1, 1)))
+        step_info["ens_argtop_k_str"] = self.tgt_dict.string(prefix_to_argtop_k_ens_prob[key].view((self.top_k_words, 1)))
         step_info["models_argtop_k_str"] = [self.tgt_dict.string(v.view((self.top_k_words, 1))) for v in
                                             prefix_to_argtop_k_models_probs[key]]
 
