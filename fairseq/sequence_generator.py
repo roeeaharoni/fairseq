@@ -293,7 +293,7 @@ class SequenceGenerator(object):
                      }
         step_info["selected_token_per_model"] = [argtop[0].cpu().numpy() for argtop in
                                                  prefix_to_argtop_k_models_probs[key]]
-        step_info["selected_token_by_ens"] = prefix_to_argtop_k_ens_prob[0].cpu().numpy()
+        step_info["selected_token_by_ens"] = prefix_to_argtop_k_ens_prob[key][0].cpu().numpy()
         step_info["selected_token_per_model_str"] = [self.tgt_dict.string(v.view((1, 1))) for v in
                                                      step_info["selected_token_per_model"]]
         step_info["selected_token_by_ens_str"] = self.tgt_dict.string(step_info["selected_token_by_ens"].view((1, 1)))
@@ -306,6 +306,7 @@ class SequenceGenerator(object):
 
     def generate_step_info(self, hypo, i, info, info_over_time, prefix_to_ens_entropies, prefix_to_ens_prob,
                            prefix_to_models_entropies, prefix_to_models_probs, source_info):
+        """DEPRECATED"""
         prefix = info["target"][:i]
         prefix = self.tgt_dict.string(prefix)
         key = (prefix, source_info["source_str"])
