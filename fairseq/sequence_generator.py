@@ -815,7 +815,7 @@ class SequenceGenerator(object):
         ##### new score
         print("AVG PROBS SHAPE", avg_probs.shape)
         std = torch.std(log_probs_stacked, dim=0) # (v, b)
-        avg_probs = F.softmax(torch.logsumexp(torch.stack([std, avg_probs], dim=0)), dim=0)
+        avg_probs = F.softmax(torch.logsumexp(torch.stack([std, avg_probs], dim=0), dim=0), dim=0)
 
         #####
         # print(encoder_outs)
