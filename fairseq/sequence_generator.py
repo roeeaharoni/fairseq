@@ -112,27 +112,7 @@ class SequenceGenerator(object):
                     prefix_tokens=s['target'][:, :prefix_size] if prefix_size > 0 else None,
                 )
                 ### R&A
-                final_batch_result = {"agreements_over_time": self.agreement_batch_struct,
-                                      "final_hypos": hypos}
-                final_batch_result["source"] = encoder_input['src_tokens']
-                self.agreement_structs.append(final_batch_result)
-                self.agreement_batch_struct = {}  # defaultdict(lambda: [])
-                batch_count += 1
-                NUM_EXAMPLES = 4515
-                PICKLE_BATCHES = NUM_EXAMPLES // 1
-                slim = True
-                if batch_count > PICKLE_BATCHES:
-                    if not slim:
-                        final_eval_result = self.final_result(self.agreement_structs, slim=slim)
-                        fname = "ens_eval"
-                    else:
-                        final_eval_result = self.final_result(self.agreement_structs, slim=slim)
-                        fname = "ens_eval_slim"
-
-                    with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_b{}_k{}.pkl".format(
-                            fname, PICKLE_BATCHES, self.top_k_words), "wb") as f:
-                        pickle.dump(final_eval_result, f, pickle.HIGHEST_PROTOCOL)
-                    # exit()
+                # self.log_to_analysis_file(batch_count, encoder_input, hypos)
                 ###
 
             if timer is not None:
@@ -142,6 +122,29 @@ class SequenceGenerator(object):
                 src = utils.strip_pad(input['src_tokens'].data[i, :], self.pad)
                 ref = utils.strip_pad(s['target'].data[i, :], self.pad) if s['target'] is not None else None
                 yield id, src, ref, hypos[i]
+
+    def log_to_analysis_file(self, batch_count, encoder_input, hypos):
+        final_batch_result = {"agreements_over_time": self.agreement_batch_struct,
+                              "final_hypos": hypos}
+        final_batch_result["source"] = encoder_input['src_tokens']
+        self.agreement_structs.append(final_batch_result)
+        self.agreement_batch_struct = {}  # defaultdict(lambda: [])
+        batch_count += 1
+        NUM_EXAMPLES = 4515
+        PICKLE_BATCHES = NUM_EXAMPLES // 1
+        slim = True
+        if batch_count > PICKLE_BATCHES:
+            if not slim:
+                final_eval_result = self.final_result(self.agreement_structs, slim=slim)
+                fname = "ens_eval"
+            else:
+                final_eval_result = self.final_result(self.agreement_structs, slim=slim)
+                fname = "ens_eval_slim"
+
+            with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_b{}_k{}.pkl".format(
+                    fname, PICKLE_BATCHES, self.top_k_words), "wb") as f:
+                pickle.dump(final_eval_result, f, pickle.HIGHEST_PROTOCOL)
+            # exit()
 
     def extract_prefix_to_entropies_and_probabilities(self, agreements_over_time, source_batch):
         """
@@ -813,9 +816,9 @@ class SequenceGenerator(object):
             avg_attn.div_(len(self.models))
 
         ##### new score
-        print("AVG PROBS SHAPE", avg_probs.shape)
-        std = torch.std(log_probs_stacked, dim=0) # (v, b)
-        avg_probs = torch.logsumexp(torch.stack([-std, avg_probs], dim=0), dim=0)
+        # print("AVG PROBS SHAPE", avg_probs.shape)
+        # std = torch.std(log_probs_stacked, dim=0) # (v, b)
+        # avg_probs = torch.logsumexp(torch.stack([-std, avg_probs], dim=0), dim=0)
 
         #####
         # print(encoder_outs)
