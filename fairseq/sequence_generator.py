@@ -112,7 +112,7 @@ class SequenceGenerator(object):
                     prefix_tokens=s['target'][:, :prefix_size] if prefix_size > 0 else None,
                 )
                 ### R&A
-                # self.log_to_analysis_file(batch_count, encoder_input, hypos)
+                self.log_to_analysis_file(batch_count, encoder_input, hypos)
                 ###
 
             if timer is not None:
@@ -131,7 +131,8 @@ class SequenceGenerator(object):
         self.agreement_batch_struct = {}  # defaultdict(lambda: [])
         batch_count += 1
         NUM_EXAMPLES = 4515
-        PICKLE_BATCHES = NUM_EXAMPLES // 1
+        BATCH_SIZE = 1
+        PICKLE_BATCHES = NUM_EXAMPLES // BATCH_SIZE - 1
         slim = True
         if batch_count > PICKLE_BATCHES:
             if not slim:
