@@ -118,8 +118,8 @@ class SequenceGenerator(object):
                 self.agreement_structs.append(final_batch_result)
                 self.agreement_batch_struct = {}  # defaultdict(lambda: [])
                 batch_count += 1
-                NUM_EXAMPLES = 1000
-                PICKLE_BATCHES = NUM_EXAMPLES // 1 - 1
+                NUM_EXAMPLES = 4515
+                PICKLE_BATCHES = NUM_EXAMPLES // 1
                 slim = True
                 if batch_count > PICKLE_BATCHES:
                     if not slim:
@@ -132,7 +132,7 @@ class SequenceGenerator(object):
                     with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_b{}_k{}.pkl".format(
                             fname, PICKLE_BATCHES, self.top_k_words), "wb") as f:
                         pickle.dump(final_eval_result, f, pickle.HIGHEST_PROTOCOL)
-                    exit()
+                    # exit()
                 ###
 
             if timer is not None:
@@ -807,9 +807,15 @@ class SequenceGenerator(object):
                     avg_attn = attn
                 else:
                     avg_attn.add_(attn)
-        avg_probs = torch.logsumexp(torch.stack(log_probs, dim=0), dim=0) - math.log(len(self.models))
+        log_probs_stacked = torch.stack(log_probs, dim=0)
+        avg_probs = torch.logsumexp(log_probs_stacked, dim=0) - math.log(len(self.models))
         if avg_attn is not None:
             avg_attn.div_(len(self.models))
+
+        ##### new score
+        print("AVG PROBS SHAPE", avg_probs.shape)
+        std = torch.std(log_probs_stacked, dim=0) # (v, b)
+        avg_probs = F.softmax(torch.logsumexp(torch.stack([std, avg_probs], dim=0)), dim=0)
 
         #####
         # print(encoder_outs)
