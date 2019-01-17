@@ -142,7 +142,7 @@ class SequenceGenerator(object):
                 final_eval_result = self.final_result(self.agreement_structs, slim=slim)
                 fname = "ens_eval_slim"
 
-            with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_b{}_k{}.pkl".format(
+            with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_b{}_k{}_baseline.pkl".format(
                     fname, PICKLE_BATCHES, self.top_k_words), "wb") as f:
                 pickle.dump(final_eval_result, f, pickle.HIGHEST_PROTOCOL)
             # exit()
