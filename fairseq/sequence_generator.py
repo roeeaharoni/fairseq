@@ -142,7 +142,7 @@ class SequenceGenerator(object):
                 final_eval_result = self.final_result(self.agreement_structs, slim=slim)
                 fname = "ens_eval_slim"
 
-            with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_b{}_k{}baseline.pkl".format(
+            with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_b{}_k{}std.pkl".format(
                     fname, PICKLE_BATCHES, self.top_k_words), "wb") as f:
                 pickle.dump(final_eval_result, f, pickle.HIGHEST_PROTOCOL)
             # exit()
@@ -817,8 +817,8 @@ class SequenceGenerator(object):
             avg_attn.div_(len(self.models))
 
         ##### new score
-        # std = torch.std(log_probs_stacked, dim=0) # (v, b)
-        # avg_probs = torch.logsumexp(torch.stack([-std, avg_probs], dim=0), dim=0)
+        std = torch.std(log_probs_stacked, dim=0) # (v, b)
+        avg_probs = torch.logsumexp(torch.stack([-std, avg_probs], dim=0), dim=0)
         #####
         # print(encoder_outs)
         # print(encoder_outs[0]["encounter_outs"].size())
