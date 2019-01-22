@@ -113,6 +113,7 @@ class SequenceGenerator(object):
                 )
                 ### R&A
                 self.log_to_analysis_file(batch_count, encoder_input, hypos)
+                batch_count += 1
                 ###
 
             if timer is not None:
@@ -129,7 +130,7 @@ class SequenceGenerator(object):
         final_batch_result["source"] = encoder_input['src_tokens']
         self.agreement_structs.append(final_batch_result)
         self.agreement_batch_struct = {}
-        batch_count += 1
+
         self.write_analysis_to_file(batch_count)
 
     def write_analysis_to_file(self, batch_count):
