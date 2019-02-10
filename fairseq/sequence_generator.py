@@ -16,6 +16,7 @@ import torch.nn.functional as F
 from fairseq import search, utils
 from fairseq.models import FairseqIncrementalDecoder
 
+import sys
 import numpy as np
 
 
@@ -219,10 +220,13 @@ class SequenceGenerator(object):
                 mapping_top_k_models_ents[key] = [self.entropy(prob.view(1, self.top_k_words)) for prob in \
                                                   mapping_top_k_models_probs[key]]
 
-        # mapping_models_prob, mapping_ens_prob,
-        return mapping_ens_ent, mapping_models_ent, \
+
+        return mapping_models_prob, mapping_ens_prob, mapping_ens_ent, mapping_models_ent, \
                mapping_top_k_models_probs, mapping_top_k_ens_prob, mapping_top_k_models_ents, mapping_top_k_ens_ent, \
                mapping_argtop_k_models_probs, mapping_argtop_k_ens_prob, mapping_ens_top_k_models_probs
+
+    def eprint(self, *args, **kwargs):
+        print(*args, file=sys.stderr, **kwargs)
 
     def final_result(self, agreement_structs, slim=True):
         # list of instances
@@ -236,8 +240,8 @@ class SequenceGenerator(object):
 
         samples = []
         for batch_ix, batch in enumerate(agreement_structs):
-            # prefix_to_models_probs, \
-            # prefix_to_ens_prob, \
+            prefix_to_models_probs, \
+            prefix_to_ens_prob, \
             prefix_to_ens_entropies, \
             prefix_to_models_entropies, \
             prefix_to_models_top_k_probs, \
@@ -251,6 +255,8 @@ class SequenceGenerator(object):
                 batch["agreements_over_time"], batch["source"])
 
             for sample_ix, sample in enumerate(batch["final_hypos"]):
+                self.eprint("Processing: ", len(samples))
+
                 hypos = []
 
                 source_tokens = batch["source"][sample_ix]
@@ -272,7 +278,9 @@ class SequenceGenerator(object):
                                                          prefix_to_models_top_k_ents, prefix_to_ens_top_k_ent,
                                                          prefix_to_argtop_k_models_probs, prefix_to_argtop_k_ens_prob,
                                                          prefix_to_ens_top_k_models_probs,
-                                                         source_info)
+                                                         source_info,
+                                                         prefix_to_models_probs,
+                                                         prefix_to_ens_prob)
                         else:
                             self.generate_step_info(hypo, i, info, info_over_time, prefix_to_ens_entropies,
                                                     prefix_to_ens_prob,
@@ -292,7 +300,9 @@ class SequenceGenerator(object):
                                 prefix_to_ens_top_k_prob, prefix_to_models_top_k_ents, prefix_to_ens_top_k_ent,
                                 prefix_to_argtop_k_models_probs, prefix_to_argtop_k_ens_prob,
                                 prefix_to_ens_top_k_models_probs,
-                                source_info):
+                                source_info,
+                                prefix_to_models_probs,
+                                prefix_to_ens_prob):
         prefix = info["target"][:i]
         prefix = self.tgt_dict.string(prefix)
         key = (prefix, source_info["source_str"])
@@ -319,6 +329,12 @@ class SequenceGenerator(object):
         step_info["ens_argtop_k_str"] = self.tgt_dict.string(prefix_to_argtop_k_ens_prob[key].view((self.top_k_words, 1)))
         step_info["models_argtop_k_str"] = [self.tgt_dict.string(v.view((self.top_k_words, 1))) for v in
                                             prefix_to_argtop_k_models_probs[key]]
+
+        step_info["globally_selected_token"] = info["target"][i]
+        step_info["globally_selected_token_ens_prob"] = prefix_to_ens_prob[key][step_info["globally_selected_token"]].cpu().numpy()
+        step_info["globally_selected_token_models_probs"] = [probs[step_info["globally_selected_token"]]
+                                                             for probs in prefix_to_models_probs[key]]
+
 
         info_over_time.append(step_info)
 
