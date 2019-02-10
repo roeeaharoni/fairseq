@@ -113,7 +113,7 @@ class SequenceGenerator(object):
                     prefix_tokens=s['target'][:, :prefix_size] if prefix_size > 0 else None,
                 )
                 ### R&A
-                self.log_to_analysis_file(batch_count, encoder_input, hypos)
+                # self.log_to_analysis_file(batch_count, encoder_input, hypos)
                 batch_count += 1
                 ###
 
@@ -838,9 +838,9 @@ class SequenceGenerator(object):
             avg_attn.div_(len(self.models))
 
         ##### new score
-        # std = torch.std(log_probs_stacked, dim=0) # (v, b)
-        # avg_probs = torch.logsumexp(torch.stack([-std, avg_probs], dim=0), dim=0)
-        # del std
+        std = torch.std(log_probs_stacked, dim=0) # (v, b)
+        avg_probs = torch.logsumexp(torch.stack([-std, avg_probs], dim=0), dim=0)
+        del std
         #####
         # print(encoder_outs)
         # print(encoder_outs[0]["encounter_outs"].size())
