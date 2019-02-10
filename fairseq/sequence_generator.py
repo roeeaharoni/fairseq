@@ -113,7 +113,7 @@ class SequenceGenerator(object):
                     prefix_tokens=s['target'][:, :prefix_size] if prefix_size > 0 else None,
                 )
                 ### R&A
-                # self.log_to_analysis_file(batch_count, encoder_input, hypos)
+                self.log_to_analysis_file(batch_count, encoder_input, hypos)
                 batch_count += 1
                 ###
 
@@ -140,7 +140,7 @@ class SequenceGenerator(object):
         # NUM_EXAMPLES = 4515
         # PICKLE_BATCHES = NUM_EXAMPLES // BATCH_SIZE - 1
         # if batch_count > PICKLE_BATCHES:
-        if batch_count == 2000:
+        if batch_count == 500:
             if not slim:
                 final_eval_result = self.final_result(self.agreement_structs, slim=slim)
                 fname = "ens_eval"
@@ -330,10 +330,11 @@ class SequenceGenerator(object):
         step_info["models_argtop_k_str"] = [self.tgt_dict.string(v.view((self.top_k_words, 1))) for v in
                                             prefix_to_argtop_k_models_probs[key]]
 
-        step_info["globally_selected_token"] = info["target"][i]
+        step_info["globally_selected_token"] = info["target"][i].cpu().numpy()
         step_info["globally_selected_token_ens_prob"] = prefix_to_ens_prob[key][step_info["globally_selected_token"]].cpu().numpy()
-        step_info["globally_selected_token_models_probs"] = [probs[step_info["globally_selected_token"]]
+        step_info["globally_selected_token_models_probs"] = [probs[step_info["globally_selected_token"]].cpu().numpy()
                                                              for probs in prefix_to_models_probs[key]]
+        self.eprint(step_info)
 
 
         info_over_time.append(step_info)
@@ -838,9 +839,9 @@ class SequenceGenerator(object):
             avg_attn.div_(len(self.models))
 
         ##### new score
-        std = torch.std(log_probs_stacked, dim=0) # (v, b)
-        avg_probs = torch.logsumexp(torch.stack([-std, avg_probs], dim=0), dim=0)
-        del std
+        # std = torch.std(log_probs_stacked, dim=0) # (v, b)
+        # avg_probs = torch.logsumexp(torch.stack([-std, avg_probs], dim=0), dim=0)
+        # del std
         #####
         # print(encoder_outs)
         # print(encoder_outs[0]["encounter_outs"].size())
