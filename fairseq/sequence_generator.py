@@ -140,7 +140,7 @@ class SequenceGenerator(object):
         # NUM_EXAMPLES = 4515
         # PICKLE_BATCHES = NUM_EXAMPLES // BATCH_SIZE - 1
         # if batch_count > PICKLE_BATCHES:
-        if batch_count == 4000:
+        if batch_count == 2000:
             if not slim:
                 final_eval_result = self.final_result(self.agreement_structs, slim=slim)
                 fname = "ens_eval"
@@ -148,7 +148,7 @@ class SequenceGenerator(object):
                 final_eval_result = self.final_result(self.agreement_structs, slim=slim)
                 fname = "ens_eval_slim"
 
-            with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_b{}_k{}_std.pkl".format(
+            with open("/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/{}_b{}_k{}_baseline.pkl".format(
                     fname, batch_count*BATCH_SIZE, self.top_k_words), "wb") as f:
                 pickle.dump(final_eval_result, f, pickle.HIGHEST_PROTOCOL)
             # exit()
@@ -838,9 +838,9 @@ class SequenceGenerator(object):
             avg_attn.div_(len(self.models))
 
         ##### new score
-        std = torch.std(log_probs_stacked, dim=0) # (v, b)
-        avg_probs = torch.logsumexp(torch.stack([-std, avg_probs], dim=0), dim=0)
-        del std
+        # std = torch.std(log_probs_stacked, dim=0) # (v, b)
+        # avg_probs = torch.logsumexp(torch.stack([-std, avg_probs], dim=0), dim=0)
+        # del std
         #####
         # print(encoder_outs)
         # print(encoder_outs[0]["encounter_outs"].size())
