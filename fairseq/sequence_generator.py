@@ -139,7 +139,7 @@ class SequenceGenerator(object):
         # NUM_EXAMPLES = 4515
         # PICKLE_BATCHES = NUM_EXAMPLES // BATCH_SIZE - 1
         # if batch_count > PICKLE_BATCHES:
-        if batch_count == 100:
+        if batch_count == 4000:
             if not slim:
                 final_eval_result = self.final_result(self.agreement_structs, slim=slim)
                 fname = "ens_eval"
