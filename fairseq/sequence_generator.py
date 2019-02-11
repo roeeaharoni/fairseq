@@ -113,7 +113,7 @@ class SequenceGenerator(object):
                     prefix_tokens=s['target'][:, :prefix_size] if prefix_size > 0 else None,
                 )
                 ### R&A
-                self.log_to_analysis_file(batch_count, encoder_input, hypos)
+                # self.log_to_analysis_file(batch_count, encoder_input, hypos)
                 batch_count += 1
                 ###
 
