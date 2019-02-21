@@ -85,4 +85,9 @@ class SequenceScorer(object):
             dim=2,
             index=sample['target'].data.unsqueeze(-1),
         )
+
+        # TODO: per step - get ens_globally_selected_prob (mean), top_k_ens_, entropy
+        print(avg_probs.shape)
+
+
         return avg_probs.squeeze(2), avg_attn
