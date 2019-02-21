@@ -82,7 +82,7 @@ class SequenceScorer(object):
                     avg_attn.add_(attn)
         avg_probs.div_(len(self.models))
         avg_probs.log_()
-        flattend_ens_log_probs = ens_ent_per_step.squeeze()
+        flattend_ens_log_probs = avg_probs.squeeze()
         ens_ents_per_step = self.entropy(flattend_ens_log_probs)
         if avg_attn is not None:
             avg_attn.div_(len(self.models))
