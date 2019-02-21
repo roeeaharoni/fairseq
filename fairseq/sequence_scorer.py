@@ -6,7 +6,7 @@
 # can be found in the PATENTS file in the same directory.
 
 import torch
-
+import torch.nn.functional as F
 from fairseq import utils
 
 
@@ -57,6 +57,8 @@ class SequenceScorer(object):
         """Score a batch of translations."""
         net_input = sample['net_input']
 
+        ens_ent_per_step = []
+
         # compute scores for each model in the ensemble
         avg_probs = None
         avg_attn = None
@@ -80,6 +82,8 @@ class SequenceScorer(object):
                     avg_attn.add_(attn)
         avg_probs.div_(len(self.models))
         avg_probs.log_()
+        flattend_ens_log_probs = ens_ent_per_step.squeeze()
+        ens_ents_per_step = self.entropy(flattend_ens_log_probs)
         if avg_attn is not None:
             avg_attn.div_(len(self.models))
         avg_probs = avg_probs.gather(
@@ -93,6 +97,12 @@ class SequenceScorer(object):
         #  top_k_ens_, entropy
         print(avg_probs.shape) # [1,seq_len,1]
         ens_selected_probs_per_step = avg_probs.squeeze()
-        # ens_std_
+        print("probs: ",ens_selected_probs_per_step)
+        print("ents: ", ens_ents_per_step)
 
         return avg_probs.squeeze(2), avg_attn
+
+    def entropy(self, x):
+        b = F.softmax(x, dim=1) * F.log_softmax(x, dim=1)
+        b = -1.0 * b.mean(dim=1)
+        return b
