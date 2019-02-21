@@ -57,8 +57,6 @@ class SequenceScorer(object):
         """Score a batch of translations."""
         net_input = sample['net_input']
 
-        ens_ent_per_step = []
-
         # compute scores for each model in the ensemble
         avg_probs = None
         avg_attn = None
@@ -109,8 +107,14 @@ class SequenceScorer(object):
         #  top_k_ens_, entropy
         # print(avg_probs.shape) # [1,seq_len,1]
 
-        print("probs: ",ens_selected_probs_per_step)
+        print("probs: ", ens_selected_probs_per_step)
         print("ents: ", ens_ents_per_step)
+
+        path = "/home/nlp/aharonr6/git/nmt_uncertainty/models/en_he_trans_base_seg_ens/force_decode_features.txt"
+        with open(path, "a") as file:
+            ens_probs_floats = [str(float(x.item())) for x in ens_selected_probs_per_step]
+            ent_ents_floats = [str(float(x.item())) for x in ens_ents_per_step]
+            file.write(" ".join(ens_probs_floats) + "\t" + " ".join(ent_ents_floats) + "\n")
 
         return avg_probs.squeeze(2), avg_attn
 
