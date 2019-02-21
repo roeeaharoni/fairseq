@@ -86,7 +86,7 @@ class SequenceScorer(object):
         ens_selected_probs_per_step = torch.tensor(avg_probs.gather(
             dim=2,
             index=sample['target'].data.unsqueeze(-1),
-        ))
+        )).squeeze()
         # end ours
 
         avg_probs.log_()
