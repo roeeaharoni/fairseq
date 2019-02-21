@@ -110,7 +110,7 @@ class SequenceScorer(object):
         print("probs: ", ens_selected_probs_per_step)
         print("ents: ", ens_ents_per_step)
 
-        path = "/home/nlp/aharonr6/git/nmt_uncertainty/models/en_he_trans_base_seg_ens/force_decode_features.txt"
+        path = "/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/force_decode_features.txt"
         with open(path, "a") as file:
             ens_probs_floats = [str(float(x.item())) for x in ens_selected_probs_per_step]
             ent_ents_floats = [str(float(x.item())) for x in ens_ents_per_step]
