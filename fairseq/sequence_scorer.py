@@ -81,9 +81,15 @@ class SequenceScorer(object):
                 else:
                     avg_attn.add_(attn)
         avg_probs.div_(len(self.models))
+
+        # ours:
+        ens_selected_probs_per_step = avg_probs.squeeze()
         avg_probs.log_()
+
+        # ours:
         flattend_ens_log_probs = avg_probs.squeeze()
         ens_ents_per_step = self.entropy(flattend_ens_log_probs)
+
         if avg_attn is not None:
             avg_attn.div_(len(self.models))
         avg_probs = avg_probs.gather(
@@ -95,8 +101,8 @@ class SequenceScorer(object):
         # get ens_globally_selected_prob (mean) - done
         # ens std
         #  top_k_ens_, entropy
-        print(avg_probs.shape) # [1,seq_len,1]
-        ens_selected_probs_per_step = avg_probs.squeeze()
+        # print(avg_probs.shape) # [1,seq_len,1]
+
         print("probs: ",ens_selected_probs_per_step)
         print("ents: ", ens_ents_per_step)
 
