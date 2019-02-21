@@ -67,6 +67,7 @@ class SequenceScorer(object):
                 attn = decoder_out[1]
 
             probs = model.get_normalized_probs(decoder_out, log_probs=False, sample=sample).data
+            print(probs.shape)
             if avg_probs is None:
                 avg_probs = probs
             else:
@@ -86,8 +87,12 @@ class SequenceScorer(object):
             index=sample['target'].data.unsqueeze(-1),
         )
 
-        # TODO: per step - get ens_globally_selected_prob (mean), top_k_ens_, entropy
-        print(avg_probs.shape)
-
+        # TODO: per step
+        # get ens_globally_selected_prob (mean) - done
+        # ens std
+        #  top_k_ens_, entropy
+        print(avg_probs.shape) # [1,seq_len,1]
+        ens_selected_probs_per_step = avg_probs.squeeze()
+        ens_std_
 
         return avg_probs.squeeze(2), avg_attn
