@@ -83,12 +83,18 @@ class SequenceScorer(object):
         avg_probs.div_(len(self.models))
 
         # ours:
-        ens_selected_probs_per_step = avg_probs.squeeze()
+        ens_selected_probs_per_step = torch.tensor(avg_probs.gather(
+            dim=2,
+            index=sample['target'].data.unsqueeze(-1),
+        ))
+        # end ours
+
         avg_probs.log_()
 
         # ours:
         flattend_ens_log_probs = avg_probs.squeeze()
         ens_ents_per_step = self.entropy(flattend_ens_log_probs)
+        # end ours
 
         if avg_attn is not None:
             avg_attn.div_(len(self.models))
