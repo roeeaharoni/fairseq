@@ -93,6 +93,6 @@ class SequenceScorer(object):
         #  top_k_ens_, entropy
         print(avg_probs.shape) # [1,seq_len,1]
         ens_selected_probs_per_step = avg_probs.squeeze()
-        ens_std_
+        # ens_std_
 
         return avg_probs.squeeze(2), avg_attn
