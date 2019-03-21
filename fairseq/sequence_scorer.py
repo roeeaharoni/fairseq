@@ -101,20 +101,22 @@ class SequenceScorer(object):
             index=sample['target'].data.unsqueeze(-1),
         )
 
-        # TODO: per step
+        # ours:
+        # per step
         # get ens_globally_selected_prob (mean) - done
         # ens std
         #  top_k_ens_, entropy
         # print(avg_probs.shape) # [1,seq_len,1]
-
         print("probs: ", ens_selected_probs_per_step)
         print("ents: ", ens_ents_per_step)
 
-        path = "/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/force_decode_features.txt"
+        # path = "/home/nlp/aharonr6/git/nmt-uncertainty/models/en_he_trans_base_seg_ens/force_decode_features.txt"
+        path = "/home/nlp/aharonr6/git/nmt-uncertainty/data/QE/WMT17 Quality Estimation Shared Task Training and Development Data/sentence_level/preprocessed/train_force_decode_features.txt"
         with open(path, "a") as file:
             ens_probs_floats = [str(float(x.item())) for x in ens_selected_probs_per_step]
             ent_ents_floats = [str(float(x.item())) for x in ens_ents_per_step]
             file.write(" ".join(ens_probs_floats) + "\t" + " ".join(ent_ents_floats) + "\n")
+        # end ours
 
         return avg_probs.squeeze(2), avg_attn
 
